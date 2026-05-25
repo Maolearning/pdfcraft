@@ -26,6 +26,8 @@ import { logger } from '@/lib/utils/logger';
 import { WorkflowNode, WorkflowEdge, ToolNodeData, WorkflowExecutionState, SavedWorkflow, WorkflowTemplate, WorkflowOutputFile } from '@/types/workflow';
 import { validateWorkflow, validateConnection, topologicalSort, findInputNodes } from '@/lib/workflow/engine';
 import { executeNode, collectInputFiles } from '@/lib/workflow/executor';
+import { LIBREOFFICE_TOOL_IDS, preloadLibreOfficeConverter } from '@/lib/libreoffice/shared-converter';
+import { isCrossOriginIsolated } from '@/lib/utils/cross-origin-isolated';
 import { buildNodeOutputsFromResult, deriveWorkflowFailureContext } from '@/lib/workflow/execution-utils';
 import { saveWorkflow, getSavedWorkflows, deleteWorkflow, duplicateWorkflow, exportWorkflow, importWorkflow } from '@/lib/workflow/storage';
 import { createExecutionRecord, addExecutionRecord, completeExecutionRecord } from '@/lib/workflow/history';
@@ -401,6 +403,20 @@ function WorkflowEditorContent() {
 
             // Store outputs for each node
             const nodeOutputs = new Map<string, (Blob | WorkflowOutputFile)[]>();
+
+            const needsLibreOffice = executionOrder.some((nodeId) => {
+                const node = (nodes as WorkflowNode[]).find((n) => n.id === nodeId);
+                return node ? LIBREOFFICE_TOOL_IDS.has(node.data.toolId) : false;
+            });
+
+            if (needsLibreOffice && isCrossOriginIsolated()) {
+                logger.log('[Workflow] Preloading LibreOffice conversion engine...');
+                await preloadLibreOfficeConverter();
+            } else if (needsLibreOffice) {
+                logger.log(
+                    '[Workflow] Cross-Origin Isolation unavailable; Word .docx will use compatibility converter.'
+                );
+            }
 
             // Execute each node in order
             for (let i = 0; i < executionOrder.length; i++) {
