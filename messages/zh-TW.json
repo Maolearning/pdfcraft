@@ -631,7 +631,10 @@
       "fillColorLabel": "啟用填充顏色:",
       "defaultAuthor": "標注 (不具名用户)",
       "undoBtn": "撤銷",
-      "redoBtn": "重做"
+      "redoBtn": "重做",
+      "unnamedUser": "不具名使用者",
+      "undo": "撤銷",
+      "redo": "重做"
     },
     "einkOptimizer": {
       "otsueThresholdSuffix": " (Otsu 閾值偏移)",

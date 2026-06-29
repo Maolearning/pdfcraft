@@ -631,7 +631,10 @@
       "fillColorLabel": "启用填充色:",
       "defaultAuthor": "标注 (不具名用户)",
       "undoBtn": "撤销",
-      "redoBtn": "重做"
+      "redoBtn": "重做",
+      "unnamedUser": "不具名用户",
+      "undo": "撤销",
+      "redo": "重做"
     },
     "einkOptimizer": {
       "otsueThresholdSuffix": " (大津偏置)",
