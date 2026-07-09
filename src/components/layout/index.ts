@@ -9,3 +9,4 @@ export {
   saveLanguagePreference,
   getLanguagePreference 
 } from './LanguageSelector';
+export { FloatingNav } from './FloatingNav';

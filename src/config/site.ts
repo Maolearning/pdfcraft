@@ -2,7 +2,7 @@
  * Site configuration
  */
 export const siteConfig = {
-  name: 'PDFCraft',
+  name: 'PDF处理',
   description: 'Professional PDF Tools - Free, Private & Browser-Based. Merge, split, compress, convert, and edit PDF files online without uploading to servers.',
   url: 'https://pdfcraft.devtoolcafe.com',
   ogImage: '/images/og-image.png',
@@ -25,8 +25,8 @@ export const siteConfig = {
   ],
   // SEO-related settings
   seo: {
-    titleTemplate: '%s | PDFCraft',
-    defaultTitle: 'PDFCraft - Professional PDF Tools',
+    titleTemplate: '%s | PDF处理',
+    defaultTitle: 'PDF处理 - 专业 PDF 工具',
     twitterHandle: '@pdfcraft',
     locale: 'en_US',
   },

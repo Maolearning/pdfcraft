@@ -261,25 +261,7 @@ export default function ContactPageClient({ locale }: ContactPageClientProps) {
           </div>
         </section>
 
-        {/* FAQ Link */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center">
-              <MessageSquare className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--color-muted-foreground))]" />
-              <h2 className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4">
-                {t('faq.title')}
-              </h2>
-              <p className="text-[hsl(var(--color-muted-foreground))] mb-6">
-                {t('faq.description', { brand: tCommon('brand') })}
-              </p>
-              <Link href={`/${locale}/faq`}>
-                <Button variant="outline">
-                  {t('faq.button')}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+
       </main>
 
       <Footer locale={locale} />

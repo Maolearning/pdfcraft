@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Search, Menu, X, Command, Github } from 'lucide-react';
 import { type Locale } from '@/lib/i18n/config';
@@ -21,6 +21,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) => {
   const t = useTranslations('common');
   const router = useRouter();
+  const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -172,29 +173,6 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
         <div className="flex h-20 items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex flex-1 items-center gap-2">
-            <Link
-              href={`/${locale}`}
-              className="group flex items-center gap-2.5 text-xl font-bold text-[hsl(var(--color-foreground))] hover:opacity-90 transition-opacity"
-              aria-label={`${t('brand')} - ${t('navigation.home')}`}
-            >
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-accent))] shadow-lg shadow-primary/25 transition-transform group-hover:scale-105">
-                <svg
-                  className="h-5 w-5 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </div>
-              <span className="text-xl tracking-tight" data-testid="brand-name">
-                {t('brand')}
-              </span>
-            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -204,15 +182,22 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
             role="navigation"
             aria-label="Main navigation"
           >
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="px-4 py-1.5 text-sm font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] rounded-full transition-all"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || (item.href.endsWith('/tools') && pathname.includes('/tools/'));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
+                    isActive
+                      ? 'bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))] font-semibold'
+                      : 'text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5]'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right side actions */}
@@ -325,7 +310,7 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span className="hidden sm:inline">返回首页</span>
+              <span className="hidden sm:inline">返回主站</span>
             </a>
 
             {/* Theme Toggle */}

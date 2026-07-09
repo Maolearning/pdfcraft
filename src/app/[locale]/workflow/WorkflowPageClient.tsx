@@ -34,37 +34,32 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
         <div className="h-screen flex flex-col bg-[hsl(var(--color-background))]">
             {/* Compact Top Navigation Bar - 48px */}
             <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))] px-4 flex items-center justify-between">
-                {/* Left: Logo and Title */}
+                {/* Left: Title */}
                 <div className="flex items-center gap-3">
-                    <Link
-                        href={`/${locale}`}
-                        className="flex items-center gap-2 text-[hsl(var(--color-foreground))] hover:text-[hsl(var(--color-primary))] transition-colors"
-                    >
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-accent))] shadow-sm">
-                            <svg
-                                className="h-4 w-4 text-white"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                        </div>
-                        <span className="font-semibold text-sm hidden sm:inline">{t('brand')}</span>
-                    </Link>
-
-                    <span className="text-[hsl(var(--color-border))]">|</span>
-
                     <div className="flex items-center gap-1.5">
                         <GitBranch className="w-4 h-4 text-[hsl(var(--color-primary))]" />
                         <h1 className="text-sm font-medium text-[hsl(var(--color-foreground))]">
                             {tWorkflow('title') || 'PDF Workflow Builder'}
                         </h1>
                     </div>
+                </div>
+
+                {/* Center: Tools & Workflow Switcher */}
+                <div className="hidden md:flex items-center justify-center">
+                    <nav className="flex items-center gap-0.5 rounded-full border border-[hsl(var(--color-border))] bg-[hsl(var(--color-muted))/0.2] p-0.5 shadow-sm">
+                        <Link
+                            href={`/${locale}/tools`}
+                            className="px-3 py-1 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] rounded-full transition-all"
+                        >
+                            {t('navigation.tools')}
+                        </Link>
+                        <Link
+                            href={`/${locale}/workflow`}
+                            className="px-3 py-1 text-xs font-semibold bg-[hsl(var(--color-primary))/0.12] text-[hsl(var(--color-primary))] rounded-full transition-all"
+                        >
+                            {t('navigation.workflow') || 'Workflow'}
+                        </Link>
+                    </nav>
                 </div>
 
                 {/* Right: Navigation Links */}
@@ -74,7 +69,7 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] rounded-md transition-colors"
                     >
                         <Home className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">{t('navigation.home')}</span>
+                        <span className="hidden md:inline">PDF首页</span>
                     </Link>
                     <Link
                         href={`/${locale}/tools`}
@@ -82,20 +77,6 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
                     >
                         <Wrench className="w-3.5 h-3.5" />
                         <span className="hidden md:inline">{t('navigation.tools')}</span>
-                    </Link>
-                    <Link
-                        href={`/${locale}/about`}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] rounded-md transition-colors"
-                    >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">{t('navigation.about')}</span>
-                    </Link>
-                    <Link
-                        href={`/${locale}/faq`}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] rounded-md transition-colors"
-                    >
-                        <HelpCircle className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">{t('navigation.faq')}</span>
                     </Link>
                 </nav>
             </header>

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "home": {
-      "title": "PDFCraft - Professional PDF Tools",
+      "title": "PDF处理 - Professional PDF Tools",
       "description": "Free, Private & Browser-Based. Merge, edit, and edit PDF files online without uploading to servers."
     },
     "tools": {
@@ -35,7 +35,7 @@
     }
   },
   "common": {
-    "brand": "PDFCraft",
+    "brand": "PDF处理",
     "tagline": "Professional PDF Tools - Free & Private",
     "navigation": {
       "home": "Home",

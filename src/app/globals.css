@@ -3,9 +3,9 @@
 /* PDFCraft Design System - CSS Variables for Theming */
 :root {
   /* Primary Colors - Deep Blue/Indigo for trust and modern tech feel */
-  --color-primary: 226 71% 55%; /* #3b82f6 - slightly more vibrant */
+  --color-primary: 211 100% 45%; /* #0071e3 - Apple System Blue */
   --color-primary-foreground: 0 0% 100%;
-  --color-primary-hover: 226 71% 45%;
+  --color-primary-hover: 211 100% 38%;
   
   /* Secondary Colors - Slate for neutral elements */
   --color-secondary: 215 20% 90%;
@@ -31,7 +31,7 @@
   /* Border Colors */
   --color-border: 214 32% 91%;
   --color-input: 214 32% 91%;
-  --color-ring: 226 71% 55%;
+  --color-ring: 211 100% 45%;
   
   /* Destructive Colors */
   --color-destructive: 0 84% 60%;
@@ -59,10 +59,10 @@
   --spacing-3xl: 4rem;
   
   /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 22px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
   
   /* Shadows - Layered, smoother shadows for depth */
@@ -81,9 +81,9 @@
 /* Dark Mode Theme */
 .dark {
   color-scheme: dark;
-  --color-primary: 226 71% 60%;
+  --color-primary: 211 100% 50%;
   --color-primary-foreground: 222 47% 11%;
-  --color-primary-hover: 226 71% 70%;
+  --color-primary-hover: 211 100% 58%;
   
   --color-secondary: 215 20% 20%;
   --color-secondary-foreground: 210 40% 98%;
@@ -103,7 +103,7 @@
   
   --color-border: 217 33% 15%;
   --color-input: 217 33% 15%;
-  --color-ring: 226 71% 60%;
+  --color-ring: 211 100% 50%;
 }
 
 /* Base Styles */
@@ -112,7 +112,8 @@
 }
 
 body {
-  background-color: hsl(var(--color-background));
+  background: url('/assets/site-background.webp') no-repeat center center fixed;
+  background-size: cover;
   color: hsl(var(--color-foreground));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -199,16 +200,19 @@ select option {
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 .dark .glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.4));
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 /* Animations */
@@ -307,3 +311,138 @@ select option {
 .scroll-smooth { scroll-behavior: smooth; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ===== Unified Floating Navigation Sidebar ===== */
+.floating-nav {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.95;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 20px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  z-index: 1000;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-nav:hover {
+  transform: translateX(-50%) translateY(-4px);
+  opacity: 1;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.dark .floating-nav {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20);
+}
+
+.dark .floating-nav:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.floating-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .floating-nav-btn {
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.floating-nav-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: #ffffff;
+  color: #0071e3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark .floating-nav-btn:hover {
+  background: #1e293b;
+  color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.floating-nav-btn.active {
+  background: #0071e3;
+  color: #ffffff;
+  border-color: #0071e3;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+}
+
+.floating-nav-btn.active:hover {
+  background: #0071e3;
+  color: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .floating-nav {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    top: auto;
+    transform: none !important;
+    opacity: 1;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 8px 10px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .floating-nav {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .floating-nav-btn {
+    flex: 1;
+    height: 52px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    box-shadow: none !important;
+    gap: 2px;
+  }
+  
+  .dark .floating-nav-btn {
+    background: transparent;
+    border: none;
+  }
+
+  .floating-nav-btn:hover {
+    transform: none;
+    background: transparent;
+  }
+  
+  .floating-nav-btn.active {
+    background: #0071e3;
+    color: #ffffff;
+    border-radius: 10px;
+  }
+}

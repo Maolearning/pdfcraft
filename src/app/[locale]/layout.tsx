@@ -6,6 +6,7 @@ import { localeConfig, type Locale, locales } from '@/lib/i18n/config';
 import { generateHomeMetadata } from '@/lib/seo';
 import { fontVariables } from '@/lib/fonts';
 import { SkipLink } from '@/components/common/SkipLink';
+import { FloatingNav } from '@/components/layout/FloatingNav';
 import '@/app/globals.css';
 
 export function generateStaticParams() {
@@ -70,9 +71,10 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <div lang={locale} dir={direction} className={`${fontVariables} min-h-screen bg-background text-foreground antialiased font-sans`}>
+      <div lang={locale} dir={direction} className={`${fontVariables} min-h-screen bg-background text-foreground antialiased font-sans pb-24 md:pb-0`}>
         <SkipLink targetId="main-content">Skip to main content</SkipLink>
         {children}
+        <FloatingNav locale={locale as Locale} />
       </div>
     </NextIntlClientProvider>
   );

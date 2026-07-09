@@ -1,7 +1,7 @@
 {
   "metadata": {
     "home": {
-      "title": "PDFCraft - 专业 PDF 工具",
+      "title": "PDF处理 - 专业 PDF 工具",
       "description": "免费、私密、基于浏览器。在线合并、编辑 PDF 文件，无需上传到服务器。"
     },
     "tools": {
@@ -35,7 +35,7 @@
     }
   },
   "common": {
-    "brand": "PDFCraft",
+    "brand": "PDF处理",
     "tagline": "专业PDF工具 - 免费且私密",
     "navigation": {
       "home": "首页",
