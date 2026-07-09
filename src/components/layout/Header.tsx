@@ -176,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
 
           {/* Desktop Navigation */}
           <nav
-            className={`hidden md:flex items-center gap-1 rounded-full border border-[hsl(var(--color-border))/0.4] bg-[hsl(var(--color-background))/0.5] p-1.5 backdrop-blur-sm shadow-sm transition-all duration-300 ${isSearchOpen ? 'opacity-0 translate-y-[-10px] pointer-events-none' : 'opacity-100 translate-y-0'
+            className={`hidden md:flex items-center gap-1 rounded-full border border-[hsl(var(--color-border))/0.4] bg-[hsl(var(--color-background))]/85 p-1.5 backdrop-blur-sm shadow-sm transition-all duration-300 ${isSearchOpen ? 'opacity-0 translate-y-[-10px] pointer-events-none' : 'opacity-100 translate-y-0'
               }`}
             role="navigation"
             aria-label="Main navigation"
@@ -193,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
                   className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
                     isActive
                       ? 'bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))] font-semibold'
-                      : 'text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5]'
+                      : 'text-[hsl(var(--color-foreground))]/70 hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5]'
                   }`}
                 >
                   {item.label}
@@ -289,6 +289,9 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
               </div>
             )}
 
+            {/* Language Selector placeholder */}
+            <div id="language-selector-slot" />
+
             {/* Recent Files Dropdown */}
             <RecentFilesDropdown
               locale={locale}
@@ -299,12 +302,6 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
                 processedWith: t('recentFiles.processedWith') || 'Processed with',
               }}
             />
-
-
-
-
-            {/* Language Selector placeholder */}
-            <div id="language-selector-slot" />
 
             {/* Mobile Menu Toggle */}
             <Button

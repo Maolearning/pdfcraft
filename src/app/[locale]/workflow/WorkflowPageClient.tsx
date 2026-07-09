@@ -32,14 +32,14 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
 
     return (
         <div className="h-screen flex flex-col">
-            {/* Compact Top Navigation Bar - 48px */}
-            <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))/0.5] bg-[hsl(var(--color-background))] px-4 flex items-center justify-center">
+            {/* Compact Top Navigation Bar - 56px */}
+            <header className="h-14 flex-shrink-0 border-b border-[hsl(var(--color-border))/0.5] bg-[hsl(var(--color-background))] px-4 flex items-center justify-center">
                 {/* Center: Tools & Workflow Switcher */}
                 <div className="flex items-center justify-center">
-                    <nav className="flex items-center gap-1 rounded-full border border-[hsl(var(--color-border))/0.4] bg-[hsl(var(--color-background))/0.5] p-1.5 backdrop-blur-sm shadow-sm transition-all duration-300">
+                    <nav className="flex items-center gap-1 rounded-full border border-[hsl(var(--color-border))/0.4] bg-[hsl(var(--color-background))]/85 p-1.5 backdrop-blur-sm shadow-sm transition-all duration-300">
                         <Link
                             href={`/${locale}/tools`}
-                            className="px-4 py-1.5 text-sm font-medium rounded-full text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] transition-all"
+                            className="px-4 py-1.5 text-sm font-medium rounded-full text-[hsl(var(--color-foreground))]/70 hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] transition-all"
                         >
                             {t('navigation.tools')}
                         </Link>

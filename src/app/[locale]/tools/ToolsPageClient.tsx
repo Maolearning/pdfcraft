@@ -116,7 +116,7 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[hsl(var(--color-accent)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
         </div>
 
-        <div className="glass-card rounded-[24px] p-6 md:p-8 flex flex-col gap-8 shadow-xl">
+        <div className="bg-[hsl(var(--color-card))]/90 backdrop-blur-md border border-[hsl(var(--color-border))/0.6] rounded-[24px] p-6 md:p-8 flex flex-col gap-8 shadow-xl">
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto w-full">
             <div className="relative group">
@@ -174,7 +174,7 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
                         ? cat.value === 'favorites'
                           ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shadow-md'
                           : 'bg-[hsl(var(--color-primary))] text-white shadow-md shadow-primary/25'
-                        : 'bg-transparent text-[hsl(var(--color-muted-foreground))] hover:bg-[hsl(var(--color-muted))] hover:text-[hsl(var(--color-foreground))]'
+                        : 'bg-[hsl(var(--color-muted))]/60 text-[hsl(var(--color-foreground))]/80 hover:bg-[hsl(var(--color-muted))] hover:text-[hsl(var(--color-foreground))]'
                       }
                     `}
                   >
