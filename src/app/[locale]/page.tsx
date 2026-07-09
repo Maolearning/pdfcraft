@@ -1,6 +1,7 @@
+import { Suspense } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/lib/i18n/config';
-import HomePageClient from './HomePageClient';
+import ToolsPageClient from './tools/ToolsPageClient';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -8,6 +9,16 @@ export function generateStaticParams() {
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
+}
+
+function ToolsPageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-pulse text-[hsl(var(--color-muted-foreground))]">
+        Loading...
+      </div>
+    </div>
+  );
 }
 
 export default async function HomePage({ params }: HomePageProps) {
@@ -33,5 +44,9 @@ export default async function HomePage({ params }: HomePageProps) {
     return acc;
   }, {} as Record<string, { title: string; description: string }>);
 
-  return <HomePageClient locale={locale as Locale} localizedToolContent={localizedToolContent} />;
+  return (
+    <Suspense fallback={<ToolsPageFallback />}>
+      <ToolsPageClient locale={locale as Locale} localizedToolContent={localizedToolContent} />
+    </Suspense>
+  );
 }

@@ -36,10 +36,7 @@ export const Navigation: React.FC<NavigationProps> = ({ locale, currentPath }) =
   ];
 
   const mainNavItems = [
-    { href: `/${locale}`, label: tCommon('navigation.home') },
     { href: `/${locale}/tools`, label: tCommon('navigation.tools'), hasDropdown: true },
-    { href: `/${locale}/about`, label: tCommon('navigation.about') },
-    { href: `/${locale}/faq`, label: tCommon('navigation.faq') },
   ];
 
   // Close dropdown when clicking outside
