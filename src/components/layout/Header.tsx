@@ -11,7 +11,6 @@ import { RecentFilesDropdown } from '@/components/common/RecentFilesDropdown';
 import { searchTools, SearchResult } from '@/lib/utils/search';
 import { getToolContent } from '@/config/tool-content';
 import { getAllTools } from '@/config/tools';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export interface HeaderProps {
   locale: Locale;
@@ -183,7 +182,10 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
             aria-label="Main navigation"
           >
             {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.href.endsWith('/tools') && pathname.includes('/tools/'));
+              const isTools = item.href.endsWith('/tools');
+              const isActive = isTools 
+                ? (pathname === item.href || pathname === `/${locale}` || pathname === `/${locale}/` || pathname.includes('/tools/'))
+                : (pathname === item.href || pathname.includes('/workflow'));
               return (
                 <Link
                   key={item.href}
@@ -312,9 +314,6 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
               </svg>
               <span className="hidden sm:inline">返回主站</span>
             </a>
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
 
             {/* Language Selector placeholder */}
             <div id="language-selector-slot" />

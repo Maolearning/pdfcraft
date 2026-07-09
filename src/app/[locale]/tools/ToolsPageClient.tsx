@@ -106,7 +106,7 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[hsl(var(--color-background))]">
+    <div className="min-h-screen flex flex-col">
       <Header locale={locale} />
 
       <main className="flex-1">

@@ -71,7 +71,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <div lang={locale} dir={direction} className={`${fontVariables} min-h-screen bg-background text-foreground antialiased font-sans pb-24 md:pb-0`}>
+      <div lang={locale} dir={direction} className={`${fontVariables} min-h-screen text-foreground antialiased font-sans pb-24 md:pb-0`}>
         <SkipLink targetId="main-content">Skip to main content</SkipLink>
         {children}
         <FloatingNav locale={locale as Locale} />

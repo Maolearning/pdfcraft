@@ -82,7 +82,7 @@ export default function HomePageClient({ locale, localizedToolContent }: HomePag
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[hsl(var(--color-background))]">
+    <div className="min-h-screen flex flex-col">
       <Header locale={locale} />
 
       <main id="main-content" className="flex-1 relative" tabIndex={-1}>

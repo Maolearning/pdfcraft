@@ -31,22 +31,12 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
     const tWorkflow = useTranslations('workflow');
 
     return (
-        <div className="h-screen flex flex-col bg-[hsl(var(--color-background))]">
+        <div className="h-screen flex flex-col">
             {/* Compact Top Navigation Bar - 48px */}
-            <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))] px-4 flex items-center justify-between">
-                {/* Left: Title */}
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                        <GitBranch className="w-4 h-4 text-[hsl(var(--color-primary))]" />
-                        <h1 className="text-sm font-medium text-[hsl(var(--color-foreground))]">
-                            {tWorkflow('title') || 'PDF Workflow Builder'}
-                        </h1>
-                    </div>
-                </div>
-
+            <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))/0.5] bg-[hsl(var(--color-background))]/80 backdrop-blur-md px-4 flex items-center justify-center">
                 {/* Center: Tools & Workflow Switcher */}
-                <div className="hidden md:flex items-center justify-center">
-                    <nav className="flex items-center gap-0.5 rounded-full border border-[hsl(var(--color-border))] bg-[hsl(var(--color-muted))/0.2] p-0.5 shadow-sm">
+                <div className="flex items-center justify-center">
+                    <nav className="flex items-center gap-0.5 rounded-full border border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))/0.5] p-0.5 shadow-sm backdrop-blur-sm">
                         <Link
                             href={`/${locale}/tools`}
                             className="px-3 py-1 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] rounded-full transition-all"
@@ -61,24 +51,6 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
                         </Link>
                     </nav>
                 </div>
-
-                {/* Right: Navigation Links */}
-                <nav className="flex items-center gap-1">
-                    <Link
-                        href={`/${locale}`}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] rounded-md transition-colors"
-                    >
-                        <Home className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">PDF首页</span>
-                    </Link>
-                    <Link
-                        href={`/${locale}/tools`}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] rounded-md transition-colors"
-                    >
-                        <Wrench className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">{t('navigation.tools')}</span>
-                    </Link>
-                </nav>
             </header>
 
             {/* Workflow Editor - fills remaining height */}
