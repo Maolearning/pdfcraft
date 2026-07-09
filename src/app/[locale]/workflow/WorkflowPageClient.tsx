@@ -33,19 +33,19 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
     return (
         <div className="h-screen flex flex-col">
             {/* Compact Top Navigation Bar - 48px */}
-            <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))/0.5] bg-[hsl(var(--color-background))]/80 backdrop-blur-md px-4 flex items-center justify-center">
+            <header className="h-12 flex-shrink-0 border-b border-[hsl(var(--color-border))/0.5] bg-[hsl(var(--color-background))] px-4 flex items-center justify-center">
                 {/* Center: Tools & Workflow Switcher */}
                 <div className="flex items-center justify-center">
-                    <nav className="flex items-center gap-0.5 rounded-full border border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))/0.5] p-0.5 shadow-sm backdrop-blur-sm">
+                    <nav className="flex items-center gap-1 rounded-full border border-[hsl(var(--color-border))/0.4] bg-[hsl(var(--color-background))/0.5] p-1.5 backdrop-blur-sm shadow-sm transition-all duration-300">
                         <Link
                             href={`/${locale}/tools`}
-                            className="px-3 py-1 text-xs font-medium text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] rounded-full transition-all"
+                            className="px-4 py-1.5 text-sm font-medium rounded-full text-[hsl(var(--color-muted-foreground))] hover:text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] transition-all"
                         >
                             {t('navigation.tools')}
                         </Link>
                         <Link
                             href={`/${locale}/workflow`}
-                            className="px-3 py-1 text-xs font-semibold bg-[hsl(var(--color-primary))/0.12] text-[hsl(var(--color-primary))] rounded-full transition-all"
+                            className="px-4 py-1.5 text-sm font-semibold rounded-full bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))] transition-all"
                         >
                             {t('navigation.workflow') || 'Workflow'}
                         </Link>
@@ -54,7 +54,7 @@ export default function WorkflowPageClient({ locale }: WorkflowPageClientProps) 
             </header>
 
             {/* Workflow Editor - fills remaining height */}
-            <main id="main-content" className="flex-1 overflow-hidden" tabIndex={-1}>
+            <main id="main-content" className="flex-1 overflow-hidden bg-[hsl(var(--color-background))]" tabIndex={-1}>
                 <WorkflowEditor />
             </main>
         </div>

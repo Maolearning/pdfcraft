@@ -302,18 +302,6 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
 
 
 
-            {/* Back to main website button */}
-            <a
-              href="https://081400.xyz/"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))/0.5] transition-all shrink-0"
-              aria-label="返回主站"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span className="hidden sm:inline">返回主站</span>
-            </a>
 
             {/* Language Selector placeholder */}
             <div id="language-selector-slot" />
