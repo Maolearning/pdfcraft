@@ -109,50 +109,42 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
     <div className="min-h-screen flex flex-col">
       <Header locale={locale} />
 
-      <main className="flex-1">
-        {/* Page Header */}
-        <section className="relative pt-28 pb-10 overflow-hidden">
-          {/* Animated Background Blobs (Subtle) */}
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[hsl(var(--color-primary)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[hsl(var(--color-accent)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
-          </div>
+      <main className="flex-1 max-w-[1360px] mx-auto w-full px-4 pt-28 pb-16 relative">
+        {/* Animated Background Blobs (Subtle) */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[hsl(var(--color-primary)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[hsl(var(--color-accent)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
+        </div>
 
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-3xl mx-auto text-center">
-
-              {/* Search Bar */}
-              <div className="relative max-w-2xl mx-auto">
-                <div className="relative group">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[hsl(var(--color-primary))] group-focus-within:text-[hsl(var(--color-primary))] transition-colors z-10" aria-hidden="true" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('tools.search.placeholder')}
-                    className="w-full pl-14 pr-12 py-4 text-lg rounded-2xl border border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] dark:bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] shadow-md focus:outline-none focus:ring-4 focus:ring-[hsl(var(--color-primary)/0.15)] focus:border-[hsl(var(--color-primary))] transition-all"
-                    aria-label="Search tools"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-[hsl(var(--color-muted))] rounded-full transition-colors"
-                      aria-label="Clear search"
-                    >
-                      <X className="h-5 w-5 text-[hsl(var(--color-muted-foreground))]" aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-              </div>
+        <div className="glass-card rounded-[24px] p-6 md:p-8 flex flex-col gap-8 shadow-xl">
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto w-full">
+            <div className="relative group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[hsl(var(--color-primary))] group-focus-within:text-[hsl(var(--color-primary))] transition-colors z-10" aria-hidden="true" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('tools.search.placeholder')}
+                className="w-full pl-14 pr-12 py-3.5 text-base rounded-2xl border border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))]/60 text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] shadow-md focus:outline-none focus:ring-4 focus:ring-[hsl(var(--color-primary)/0.15)] focus:border-[hsl(var(--color-primary))] transition-all"
+                aria-label="Search tools"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-[hsl(var(--color-muted))] rounded-full transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="h-5 w-5 text-[hsl(var(--color-muted-foreground))]" aria-hidden="true" />
+                </button>
+              )}
             </div>
           </div>
-        </section>
 
-        {/* Filters and Tools */}
-        <section className="py-8 bg-[hsl(var(--color-muted)/0.3)] min-h-[500px]">
-          <div className="container mx-auto px-4">
+          {/* Filters and Tools Grid */}
+          <div>
             {/* Filter Bar */}
-            <div className="flex flex-col md:flex-row items-center gap-6 mb-10 sticky top-20 z-40 py-4 px-6 rounded-2xl glass-card transition-all">
+            <div className="flex flex-col md:flex-row items-center gap-6 mb-8 py-3.5 px-5 rounded-2xl bg-[hsl(var(--color-background))]/40 border border-[hsl(var(--color-border))/0.4] transition-all">
               {/* Mobile Filter Toggle */}
               <Button
                 variant="outline"
@@ -284,7 +276,7 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
               </Card>
             )}
           </div>
-        </section>
+        </div>
       </main>
 
       <Footer locale={locale} />
