@@ -422,12 +422,18 @@ select option {
 
   .floating-nav-btn {
     flex: 1;
+    min-width: 0;
     height: 52px;
     border: none;
     background: transparent;
     border-radius: 10px;
     box-shadow: none !important;
     gap: 2px;
+    font-size: 0.58rem;
+  }
+
+  .floating-nav-btn span {
+    white-space: nowrap;
   }
   
   .dark .floating-nav-btn {

@@ -66,14 +66,6 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
               {/* Breadcrumb Navigation */}
               <nav aria-label="Breadcrumb" className="flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
                 <Link
-                  href={`/${locale}`}
-                  className="flex items-center hover:text-[hsl(var(--color-primary))] transition-colors"
-                  title={t('common.navigation.home')}
-                >
-                  <Home className="w-4 h-4" />
-                </Link>
-                <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-                <Link
                   href={`/${locale}/tools`}
                   className="hover:text-[hsl(var(--color-primary))] transition-colors"
                 >
