@@ -62,65 +62,67 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
 
         <main id="main-content" className="flex-1" tabIndex={-1}>
           <div className="max-w-7xl mx-auto px-4 pt-24 pb-8">
-            {/* Breadcrumb Navigation */}
-            <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
-              <Link
-                href={`/${locale}`}
-                className="flex items-center hover:text-[hsl(var(--color-primary))] transition-colors"
-                title={t('common.navigation.home')}
+            <div className="bg-[hsl(var(--color-card))]/90 backdrop-blur-md border border-[hsl(var(--color-border))/0.6] rounded-[24px] p-6 md:p-8 flex flex-col gap-8 shadow-xl">
+              {/* Breadcrumb Navigation */}
+              <nav aria-label="Breadcrumb" className="flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
+                <Link
+                  href={`/${locale}`}
+                  className="flex items-center hover:text-[hsl(var(--color-primary))] transition-colors"
+                  title={t('common.navigation.home')}
+                >
+                  <Home className="w-4 h-4" />
+                </Link>
+                <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
+                <Link
+                  href={`/${locale}/tools`}
+                  className="hover:text-[hsl(var(--color-primary))] transition-colors"
+                >
+                  {t('common.navigation.tools')}
+                </Link>
+                <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
+                <Link
+                  href={`/${locale}/tools/category/${tool.category}`}
+                  className="hover:text-[hsl(var(--color-primary))] transition-colors"
+                >
+                  {t(`home.categories.${categoryTranslationKeys[tool.category]}`)}
+                </Link>
+                <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
+                <span className="font-medium text-[hsl(var(--color-foreground))] truncate max-w-[200px] sm:max-w-md" aria-current="page">
+                  {content.title || toolDisplayName}
+                </span>
+              </nav>
+
+              {/* Tool Header */}
+              <ToolHeader tool={tool} content={content} />
+
+              {/* Tool Interface Area */}
+              <section
+                className="mt-2"
+                data-testid="tool-page-interface"
+                aria-label="Tool interface"
               >
-                <Home className="w-4 h-4" />
-              </Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-              <Link
-                href={`/${locale}/tools`}
-                className="hover:text-[hsl(var(--color-primary))] transition-colors"
-              >
-                {t('common.navigation.tools')}
-              </Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-              <Link
-                href={`/${locale}/tools/category/${tool.category}`}
-                className="hover:text-[hsl(var(--color-primary))] transition-colors"
-              >
-                {t(`home.categories.${categoryTranslationKeys[tool.category]}`)}
-              </Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-              <span className="font-medium text-[hsl(var(--color-foreground))] truncate max-w-[200px] sm:max-w-md" aria-current="page">
-                {content.title || toolDisplayName}
-              </span>
-            </nav>
+                {children}
+              </section>
 
-            {/* Tool Header */}
-            <ToolHeader tool={tool} content={content} />
+              {/* Description Section */}
+              <DescriptionSection description={content.description} />
 
-            {/* Tool Interface Area */}
-            <section
-              className="mt-6"
-              data-testid="tool-page-interface"
-              aria-label="Tool interface"
-            >
-              {children}
-            </section>
+              {/* How to Use Section */}
+              <HowToUseSection steps={content.howToUse} />
 
-            {/* Description Section */}
-            <DescriptionSection description={content.description} />
+              {/* Use Cases Section */}
+              <UseCasesSection useCases={content.useCases} />
 
-            {/* How to Use Section */}
-            <HowToUseSection steps={content.howToUse} />
+              {/* FAQ Section */}
+              <FAQSection faq={content.faq} />
 
-            {/* Use Cases Section */}
-            <UseCasesSection useCases={content.useCases} />
-
-            {/* FAQ Section */}
-            <FAQSection faq={content.faq} />
-
-            {/* Related Tools Section */}
-            <RelatedToolsSection
-              tools={relatedTools}
-              locale={locale}
-              localizedRelatedTools={localizedRelatedTools}
-            />
+              {/* Related Tools Section */}
+              <RelatedToolsSection
+                tools={relatedTools}
+                locale={locale}
+                localizedRelatedTools={localizedRelatedTools}
+              />
+            </div>
           </div>
         </main>
 
