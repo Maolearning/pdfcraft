@@ -8,7 +8,7 @@ import { getToolsByCategory } from '@/config/tools';
 import { type Locale } from '@/lib/i18n/config';
 import { type ToolCategory } from '@/types/tool';
 import Link from 'next/link';
-import { Home, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 interface CategoryPageClientProps {
     locale: Locale;
@@ -33,21 +33,13 @@ export default function CategoryPageClient({ locale, category, localizedToolCont
     const categoryName = t(`home.categories.${categoryTranslationKeys[category]}`);
 
     return (
-        <div className="min-h-screen flex flex-col bg-[hsl(var(--color-background))]">
+        <div className="min-h-screen flex flex-col">
             <Header locale={locale} />
 
-            <main className="flex-1">
-                <div className="container mx-auto px-4 pt-24 pb-8">
+            <main className="flex-1 max-w-[1360px] mx-auto w-full px-4 pt-28 pb-16 relative">
+                <div className="bg-[hsl(var(--color-card))]/90 backdrop-blur-md border border-[hsl(var(--color-border))/0.6] rounded-[24px] p-6 md:p-8 flex flex-col gap-8 shadow-xl">
                     {/* Breadcrumb Navigation */}
-                    <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
-                        <Link
-                            href={`/${locale}`}
-                            className="flex items-center hover:text-[hsl(var(--color-primary))] transition-colors"
-                            title={t('common.navigation.home')}
-                        >
-                            <Home className="w-4 h-4" />
-                        </Link>
-                        <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
+                    <nav aria-label="Breadcrumb" className="flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
                         <Link
                             href={`/${locale}/tools`}
                             className="hover:text-[hsl(var(--color-primary))] transition-colors"
@@ -61,14 +53,14 @@ export default function CategoryPageClient({ locale, category, localizedToolCont
                     </nav>
 
                     {/* Page Header */}
-                    <section className="relative mb-8">
+                    <header className="mb-2">
                         <h1 className="text-3xl font-bold text-[hsl(var(--color-foreground))] mb-2">
                             {categoryName}
                         </h1>
                         <p className="text-base text-[hsl(var(--color-muted-foreground))]">
                             {t(`home.categoriesDescription.${categoryTranslationKeys[category]}`)}
                         </p>
-                    </section>
+                    </header>
 
                     {/* Tools Grid */}
                     <ToolGrid

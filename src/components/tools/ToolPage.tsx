@@ -10,7 +10,7 @@ import { type Locale } from '@/lib/i18n/config';
 import { ToolProvider } from '@/lib/contexts/ToolContext';
 import { getToolIcon } from '@/config/icons';
 import Link from 'next/link';
-import { Home, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { useMemo } from 'react';
 import { sanitizeHtml } from '@/lib/utils/html-sanitizer';
