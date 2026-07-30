@@ -216,6 +216,12 @@ the shared script response to include:
 Cross-Origin-Resource-Policy: cross-origin
 ```
 
+`FloatingNav` must be rendered exactly once by `src/app/layout.tsx`. Do not move
+it into `src/app/[locale]/layout.tsx`: the locale layout does not cover the bare
+root route (`/`), and mounting it in both layouts creates duplicate Dock
+instances on localized pages. Keeping it in the root layout guarantees the same
+navigation on `/`, every locale homepage, and every locale tool route.
+
 Deploy the main 081400 site before deploying PDFCraft whenever the shared Dock
 contract changes.
 
@@ -383,6 +389,8 @@ After deployment, please check the following features to ensure everything is wo
 - Multi-language routing (e.g., `/en`, `/zh`)
 - Tool page loading
 - WebAssembly (PDF processing) functionality
+- One `<site-dock>` instance on both `/` and `/zh/`
+- `site-dock.js` loads successfully and no legacy `.floating-nav` is rendered
 
 ## 🤝 Contributing
 

@@ -41,6 +41,13 @@ the component URL returns successfully before deploying PDFCraft. The Dock
 script is intentionally not copied into PDFCraft, so navigation changes remain
 centralized.
 
+The integration wrapper lives at
+`src/components/layout/FloatingNav.tsx` and is mounted exactly once in
+`src/app/layout.tsx`. It must remain in the root layout so the Dock covers the
+bare root route (`/`) as well as all localized routes. Do not mount it in
+`src/app/[locale]/layout.tsx`, otherwise `/` has no Dock or localized routes may
+render duplicates.
+
 ## 🚀 Deployment Options
 
 ### 1. Vercel (Recommended)
@@ -676,6 +683,10 @@ Before deploying, verify:
 
 - [ ] `npm run build` completes without errors
 - [ ] All pages render correctly at `/en`, `/zh`, etc.
+- [ ] The bare root route `/` renders exactly one `<site-dock>`
+- [ ] A localized route such as `/zh/` renders exactly one `<site-dock>`
+- [ ] `https://081400.xyz/assets/components/site-dock.js` returns successfully
+- [ ] No legacy `.floating-nav` element is present
 - [ ] PDF tools work (WebAssembly loads correctly)
 - [ ] Cross-Origin headers are present (check DevTools → Network → Response Headers)
 - [ ] `SharedArrayBuffer` is available (run `typeof SharedArrayBuffer` in console — should return `"function"`)
@@ -687,6 +698,7 @@ Before deploying, verify:
 After deploying, test:
 
 - [ ] Multi-language routing works
+- [ ] The shared Dock works on both `/` and localized tool routes
 - [ ] PDF processing tools function correctly
 - [ ] Page refresh doesn't cause 404 errors
 - [ ] PWA can be installed
