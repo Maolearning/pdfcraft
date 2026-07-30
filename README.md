@@ -198,6 +198,27 @@ Navigate to `/workflow` or click on "Workflow Editor" in the navigation menu.
   - [PyMuPDF (WASM)](https://pymupdf.readthedocs.io/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 
+### Shared 081400 Dock
+
+The bottom tool navigation is not maintained inside PDFCraft. The
+`FloatingNav` wrapper loads the shared Web Component from:
+
+```text
+https://081400.xyz/assets/components/site-dock.js
+```
+
+Navigation labels, links, icons, active-page detection, and responsive styles
+must be changed in the `081400-web` repository at
+`assets/components/site-dock.js`. PDFCraft's cross-origin isolation requires
+the shared script response to include:
+
+```text
+Cross-Origin-Resource-Policy: cross-origin
+```
+
+Deploy the main 081400 site before deploying PDFCraft whenever the shared Dock
+contract changes.
+
 ## 🚀 Getting Started
 
 To run this project locally, follow these steps:

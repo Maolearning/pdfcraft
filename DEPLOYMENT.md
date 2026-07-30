@@ -29,6 +29,18 @@ The static output will be in the `out/` directory.
 
 > **Note:** The `postbuild` script automatically decompresses LibreOffice WASM `.gz` files in `out/libreoffice-wasm/` (e.g. `soffice.wasm.gz` → `soffice.wasm`). This ensures compatibility across all hosting platforms. See [LibreOffice WASM Architecture](#-libreoffice-wasm-architecture) for details.
 
+## Shared Dock dependency
+
+The deployed PDF app loads its bottom navigation from
+`https://081400.xyz/assets/components/site-dock.js`. Because PDFCraft enables
+`Cross-Origin-Embedder-Policy: require-corp`, that response must include
+`Cross-Origin-Resource-Policy: cross-origin`.
+
+When the shared Dock contract changes, deploy `081400-web` first and confirm
+the component URL returns successfully before deploying PDFCraft. The Dock
+script is intentionally not copied into PDFCraft, so navigation changes remain
+centralized.
+
 ## 🚀 Deployment Options
 
 ### 1. Vercel (Recommended)
