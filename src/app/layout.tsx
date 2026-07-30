@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/app/globals.css';
+import { FloatingNav } from '@/components/layout/FloatingNav';
 
 export const metadata: Metadata = {
   title: 'PDF处理',
@@ -11,8 +12,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Root layout - provides the basic HTML structure
-// The actual layout with i18n is in [locale]/layout.tsx
+// Root layout - provides shared document structure and site-wide UI.
+// Locale-specific providers and typography remain in [locale]/layout.tsx.
 export default function RootLayout({
   children,
 }: {
@@ -35,6 +36,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen text-foreground antialiased">
         {children}
+        <FloatingNav />
       </body>
     </html>
   );

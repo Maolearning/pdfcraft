@@ -1,12 +1,7 @@
 import React from 'react';
 import Script from 'next/script';
-import { type Locale } from '@/lib/i18n/config';
 
-interface FloatingNavProps {
-  locale: Locale;
-}
-
-export const FloatingNav: React.FC<FloatingNavProps> = () => (
+export const FloatingNav = () => (
   <>
     {React.createElement('site-dock')}
     <Script
