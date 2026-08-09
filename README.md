@@ -103,7 +103,7 @@ Navigate to `/workflow` or click on "Workflow Editor" in the navigation menu.
 ### ✏️ Edit & Annotate (19 tools)
 | Tool | Description |
 |------|-------------|
-| **Edit PDF** | Add text, images, annotations, highlights, and shapes |
+| **Edit PDF** | Replace or permanently remove selectable text lines; add text, images, annotations, highlights, and shapes |
 | **Sign PDF** | Draw, type, or upload electronic signatures |
 | **Crop PDF** | Trim margins and remove unwanted areas |
 | **Edit Bookmarks** | Add, edit, and manage PDF navigation bookmarks |
@@ -197,6 +197,12 @@ Navigate to `/workflow` or click on "Workflow Editor" in the navigation menu.
   - [pdf-lib](https://github.com/Hopding/pdf-lib)
   - [PyMuPDF (WASM)](https://pymupdf.readthedocs.io/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+
+### Selectable Text Editing
+
+The Edit PDF tool can replace or permanently remove one selectable text line at a time. PDF.js supplies the visual text position, while PyMuPDF WASM applies redactions and writes replacement text entirely in the browser. Scanned/image-only documents must be processed with OCR first.
+
+Implementation details, limitations, and the release verification checklist are documented in [docs/PDF_TEXT_EDITING.md](docs/PDF_TEXT_EDITING.md).
 
 ### Shared 081400 Dock
 

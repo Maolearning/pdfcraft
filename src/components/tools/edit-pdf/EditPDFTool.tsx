@@ -10,6 +10,151 @@ export interface EditPDFToolProps {
   className?: string;
 }
 
+interface PdfTextEdit {
+  id: string;
+  pageIndex: number;
+  pageNumber: number;
+  originalText: string;
+  replacementText: string;
+  rect: { x0: number; y0: number; x1: number; y1: number };
+  fontSizeRatio: number;
+  fontFamily: string;
+  fontWeight: string;
+  fontStyle: string;
+  color: { r: number; g: number; b: number };
+}
+
+function parseCssColor(value: string): { r: number; g: number; b: number } {
+  const match = value.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+  if (!match) return { r: 0, g: 0, b: 0 };
+
+  return {
+    r: Math.max(0, Math.min(1, Number(match[1]) / 255)),
+    g: Math.max(0, Math.min(1, Number(match[2]) / 255)),
+    b: Math.max(0, Math.min(1, Number(match[3]) / 255)),
+  };
+}
+
+function makeTextEditId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function createTextEditFromSelection(iframeWindow: Window, selection: Selection): PdfTextEdit {
+  if (selection.rangeCount === 0 || selection.isCollapsed) {
+    throw new Error('请先在 PDF 页面中拖动选中一行可选文字。');
+  }
+
+  const originalText = selection.toString().trim();
+  if (!originalText) {
+    throw new Error('当前选区没有可编辑文字。扫描件需要先进行 OCR。');
+  }
+
+  const range = selection.getRangeAt(0);
+  const elementForNode = (node: Node): Element | null =>
+    node.nodeType === 1 ? node as Element : node.parentElement;
+  const startElement = elementForNode(range.startContainer);
+  const endElement = elementForNode(range.endContainer);
+  const textLayer = startElement?.closest('.textLayer') as HTMLElement | null;
+  const endTextLayer = endElement?.closest('.textLayer');
+  const pageElement = textLayer?.closest('.page') as HTMLElement | null;
+
+  if (!textLayer || !pageElement || endTextLayer !== textLayer) {
+    throw new Error('一次只能选择同一页中的一行文字。');
+  }
+
+  const layerRect = textLayer.getBoundingClientRect();
+  const selectionRects = Array.from(range.getClientRects()).filter(
+    rect => rect.width > 0.5 && rect.height > 0.5
+  );
+  if (!selectionRects.length || layerRect.width <= 0 || layerRect.height <= 0) {
+    throw new Error('无法读取当前文字选区的位置，请重新选择。');
+  }
+
+  const minTop = Math.min(...selectionRects.map(rect => rect.top));
+  const maxTop = Math.max(...selectionRects.map(rect => rect.top));
+  const maxHeight = Math.max(...selectionRects.map(rect => rect.height));
+  if (maxTop - minTop > maxHeight * 0.75) {
+    throw new Error('当前本地版本一次只修改一行文字，请缩小选择范围。');
+  }
+
+  const left = Math.max(layerRect.left, Math.min(...selectionRects.map(rect => rect.left)));
+  const top = Math.max(layerRect.top, Math.min(...selectionRects.map(rect => rect.top)));
+  const right = Math.min(layerRect.right, Math.max(...selectionRects.map(rect => rect.right)));
+  const bottom = Math.min(layerRect.bottom, Math.max(...selectionRects.map(rect => rect.bottom)));
+  const pageNumber = Number(pageElement.dataset.pageNumber);
+  if (!Number.isInteger(pageNumber) || pageNumber < 1) {
+    throw new Error('无法确认所选文字的页码。');
+  }
+
+  const styleElement = startElement?.closest('span') || startElement;
+  const computedStyle = styleElement ? iframeWindow.getComputedStyle(styleElement) : null;
+  const fontSize = computedStyle ? Number.parseFloat(computedStyle.fontSize) : 12;
+
+  return {
+    id: makeTextEditId(),
+    pageIndex: pageNumber - 1,
+    pageNumber,
+    originalText,
+    replacementText: originalText,
+    rect: {
+      x0: Math.max(0, Math.min(1, (left - layerRect.left) / layerRect.width)),
+      y0: Math.max(0, Math.min(1, (top - layerRect.top) / layerRect.height)),
+      x1: Math.max(0, Math.min(1, (right - layerRect.left) / layerRect.width)),
+      y1: Math.max(0, Math.min(1, (bottom - layerRect.top) / layerRect.height)),
+    },
+    fontSizeRatio: Number.isFinite(fontSize) ? fontSize / layerRect.height : 0.015,
+    fontFamily: computedStyle?.fontFamily || 'Helvetica',
+    fontWeight: computedStyle?.fontWeight || '400',
+    fontStyle: computedStyle?.fontStyle || 'normal',
+    color: parseCssColor(computedStyle?.color || 'rgb(0, 0, 0)'),
+  };
+}
+
+function createTextEditFromTextSpan(iframeWindow: Window, span: HTMLElement): PdfTextEdit {
+  const originalText = span.textContent?.trim() || '';
+  const textLayer = span.closest('.textLayer') as HTMLElement | null;
+  const pageElement = textLayer?.closest('.page') as HTMLElement | null;
+  if (!originalText || !textLayer || !pageElement) {
+    throw new Error('当前文字行无法读取。');
+  }
+
+  const layerRect = textLayer.getBoundingClientRect();
+  const spanRect = span.getBoundingClientRect();
+  const pageNumber = Number(pageElement.dataset.pageNumber);
+  if (
+    !Number.isInteger(pageNumber)
+    || pageNumber < 1
+    || layerRect.width <= 0
+    || layerRect.height <= 0
+  ) {
+    throw new Error('无法确认当前文字行的位置。');
+  }
+
+  const computedStyle = iframeWindow.getComputedStyle(span);
+  const fontSize = Number.parseFloat(computedStyle.fontSize);
+  return {
+    id: makeTextEditId(),
+    pageIndex: pageNumber - 1,
+    pageNumber,
+    originalText,
+    replacementText: originalText,
+    rect: {
+      x0: Math.max(0, Math.min(1, (spanRect.left - layerRect.left) / layerRect.width)),
+      y0: Math.max(0, Math.min(1, (spanRect.top - layerRect.top) / layerRect.height)),
+      x1: Math.max(0, Math.min(1, (spanRect.right - layerRect.left) / layerRect.width)),
+      y1: Math.max(0, Math.min(1, (spanRect.bottom - layerRect.top) / layerRect.height)),
+    },
+    fontSizeRatio: Number.isFinite(fontSize) ? fontSize / layerRect.height : 0.015,
+    fontFamily: computedStyle.fontFamily || 'Helvetica',
+    fontWeight: computedStyle.fontWeight || '400',
+    fontStyle: computedStyle.fontStyle || 'normal',
+    color: parseCssColor(computedStyle.color || 'rgb(0, 0, 0)'),
+  };
+}
+
 /**
  * EditPDFTool Component
  * 
@@ -25,14 +170,21 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const [textEdits, setTextEdits] = useState<PdfTextEdit[]>([]);
+  const [isApplyingTextEdits, setIsApplyingTextEdits] = useState(false);
+  const [textEditStatus, setTextEditStatus] = useState<string | null>(null);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const lastTextSelectionRef = useRef<PdfTextEdit | null>(null);
 
   const handleFilesSelected = useCallback((files: File[]) => {
     if (files.length > 0) {
       const selectedFile = files[0];
       setFile(selectedFile);
       setError(null);
+      setTextEdits([]);
+      setTextEditStatus(null);
+      lastTextSelectionRef.current = null;
       setPdfUrl(URL.createObjectURL(selectedFile));
     }
   }, []);
@@ -55,6 +207,35 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
         const iframe = iframeRef.current;
         if (iframe?.contentDocument) {
           const doc = iframe.contentDocument;
+
+          const rememberTextSelection = () => {
+            const iframeWindow = iframe.contentWindow;
+            const selection = iframeWindow?.getSelection();
+            if (!iframeWindow || !selection || selection.isCollapsed || selection.rangeCount === 0) return;
+            try {
+              lastTextSelectionRef.current = createTextEditFromSelection(iframeWindow, selection);
+            } catch {
+              // Ignore partial selections while the pointer is still moving.
+            }
+          };
+          doc.addEventListener('selectionchange', rememberTextSelection);
+          doc.addEventListener('pointerup', event => {
+            const iframeWindow = iframe.contentWindow;
+            if (!iframeWindow) return;
+            const eventElement = event.target as Element | null;
+            const target = eventElement?.closest?.('.textLayer span') as HTMLElement | null;
+            if (!target) return;
+            const selection = iframeWindow.getSelection();
+            if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+              rememberTextSelection();
+              return;
+            }
+            try {
+              lastTextSelectionRef.current = createTextEditFromTextSpan(iframeWindow, target);
+            } catch {
+              // Ignore clicks outside a fully rendered text layer.
+            }
+          });
 
           // 1. Hide native PDF.js download/save buttons
           const downloadBtn = doc.getElementById('download');
@@ -587,7 +768,89 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
     setPdfUrl(null);
     setError(null);
     setIsEditorReady(false);
+    setTextEdits([]);
+    setTextEditStatus(null);
+    lastTextSelectionRef.current = null;
   }, [pdfUrl]);
+
+  const captureSelectedText = useCallback(() => {
+    try {
+      const iframeWindow = iframeRef.current?.contentWindow;
+      const selection = iframeWindow?.getSelection();
+      const liveEdit = iframeWindow && selection && selection.rangeCount > 0 && !selection.isCollapsed
+        ? createTextEditFromSelection(iframeWindow, selection)
+        : null;
+      const edit = liveEdit || lastTextSelectionRef.current;
+      if (!edit) {
+        throw new Error('请先在 PDF 页面中拖动选中一行可选文字。');
+      }
+
+      setTextEdits(current => [...current, edit]);
+      setError(null);
+      setTextEditStatus(`已读取第 ${edit.pageNumber} 页文字，请在下方输入替换内容。`);
+      lastTextSelectionRef.current = null;
+      selection?.removeAllRanges();
+    } catch (selectionError) {
+      setError(selectionError instanceof Error ? selectionError.message : '读取文字选区失败。');
+    }
+  }, [t]);
+
+  const updateTextEdit = useCallback((id: string, replacementText: string) => {
+    setTextEdits(current => current.map(edit =>
+      edit.id === id ? { ...edit, replacementText } : edit
+    ));
+    setTextEditStatus(null);
+  }, []);
+
+  const removeTextEdit = useCallback((id: string) => {
+    setTextEdits(current => current.filter(edit => edit.id !== id));
+    setTextEditStatus(null);
+  }, []);
+
+  const applyAndDownloadTextEdits = useCallback(async () => {
+    if (!file) return;
+
+    const pendingEdits = textEdits.filter(edit => edit.replacementText !== edit.originalText);
+    if (!pendingEdits.length) {
+      setError('没有待应用的文字修改。修改替换内容，或将替换内容清空以删除原文字。');
+      return;
+    }
+
+    setIsApplyingTextEdits(true);
+    setError(null);
+    setTextEditStatus('正在永久删除原文字并生成新的 PDF，首次加载引擎可能需要一点时间...');
+
+    try {
+      const { loadPyMuPDF } = await import('@/lib/pdf/pymupdf-loader');
+      const pymupdf = await loadPyMuPDF();
+      const result = await pymupdf.editPdfText(file, pendingEdits);
+      const outputName = `${file.name.replace(/\.pdf$/i, '')}_文字已编辑.pdf`;
+      const downloadUrl = URL.createObjectURL(result.pdf);
+      const anchor = document.createElement('a');
+      anchor.href = downloadUrl;
+      anchor.download = outputName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+      const editedFile = new File([result.pdf], outputName, { type: 'application/pdf' });
+      setFile(editedFile);
+      setPdfUrl(URL.createObjectURL(editedFile));
+      setTextEdits([]);
+      setIsEditorReady(false);
+      setTextEditStatus(
+        result.warnings.length
+          ? `已下载并重新载入。提示：${result.warnings.join('；')}`
+          : '文字修改已写入、下载，并重新载入到编辑器。'
+      );
+    } catch (processingError) {
+      setError(processingError instanceof Error ? processingError.message : '应用文字修改失败。');
+      setTextEditStatus(null);
+    } finally {
+      setIsApplyingTextEdits(false);
+    }
+  }, [file, textEdits]);
 
   return (
     <div className={`space-y-6 ${className}`.trim()}>
@@ -628,6 +891,74 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
               <Button variant="ghost" size="sm" onClick={handleClear}>
                 {t('buttons.clear') || 'Clear'}
               </Button>
+            </div>
+          </Card>
+
+          <Card variant="outlined" size="sm">
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">修改 PDF 原文字</p>
+                  <p className="mt-1 text-xs leading-5 text-[hsl(var(--color-muted-foreground))]">
+                    在下方 PDF 中选中一行可选文字，再点击“读取选中文字”。清空替换内容表示永久删除。请先完成原文修改，再添加普通标注。
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={captureSelectedText}
+                    disabled={!isEditorReady || isApplyingTextEdits}
+                  >
+                    读取选中文字
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={applyAndDownloadTextEdits}
+                    loading={isApplyingTextEdits}
+                    disabled={!textEdits.some(edit => edit.replacementText !== edit.originalText)}
+                  >
+                    应用并下载
+                  </Button>
+                </div>
+              </div>
+
+              {textEdits.length > 0 && (
+                <div className="space-y-2">
+                  {textEdits.map(edit => (
+                    <div
+                      key={edit.id}
+                      className="grid gap-2 rounded-[var(--radius-md)] border border-[hsl(var(--color-border))] bg-white/45 p-3 md:grid-cols-[56px_minmax(0,1fr)_24px_minmax(0,1fr)_auto] md:items-center"
+                    >
+                      <span className="text-xs font-medium text-[hsl(var(--color-muted-foreground))]">第 {edit.pageNumber} 页</span>
+                      <div className="min-w-0 rounded-md bg-black/5 px-2 py-1.5 text-sm text-[hsl(var(--color-foreground))]" title={edit.originalText}>
+                        <span className="block truncate">{edit.originalText}</span>
+                      </div>
+                      <span className="hidden text-center text-sm text-[hsl(var(--color-muted-foreground))] md:block">→</span>
+                      <input
+                        type="text"
+                        value={edit.replacementText}
+                        onChange={event => updateTextEdit(edit.id, event.target.value)}
+                        placeholder="留空表示删除"
+                        aria-label={`第 ${edit.pageNumber} 页替换文字`}
+                        className="min-w-0 rounded-md border border-[hsl(var(--color-border))] bg-white px-2 py-1.5 text-sm text-[hsl(var(--color-foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--color-ring))]"
+                      />
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => updateTextEdit(edit.id, '')}>
+                          删除原文
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => removeTextEdit(edit.id)} aria-label="移除此项修改">
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {textEditStatus && (
+                <p className="text-xs leading-5 text-[hsl(var(--color-primary))]" role="status">{textEditStatus}</p>
+              )}
             </div>
           </Card>
 

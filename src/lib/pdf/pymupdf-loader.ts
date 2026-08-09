@@ -94,6 +94,187 @@ sys.modules["fire"] = fire_mod
       // Create a wrapper object with pdfToDocx method
       pymupdfInstance = {
         pyodide,
+        async editPdfText(
+          file: File,
+          edits: Array<{
+            pageIndex: number;
+            originalText: string;
+            replacementText: string;
+            rect: { x0: number; y0: number; x1: number; y1: number };
+            fontSizeRatio: number;
+            fontFamily?: string;
+            fontWeight?: string;
+            fontStyle?: string;
+            color?: { r: number; g: number; b: number };
+          }>
+        ): Promise<{ pdf: Blob; warnings: string[] }> {
+          if (!edits.length) {
+            throw new Error('No PDF text edits were provided.');
+          }
+
+          const uid = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const inputPath = `/input_text_edit_${uid}.pdf`;
+          const editsPath = `/text_edits_${uid}.json`;
+          const fontPath = `/noto_sans_sc_${uid}.ttf`;
+          const cleanupPaths = [inputPath, editsPath, fontPath];
+
+          pyodide.FS.writeFile(inputPath, new Uint8Array(await file.arrayBuffer()));
+          pyodide.FS.writeFile(editsPath, new TextEncoder().encode(JSON.stringify(edits)));
+
+          let hasCjkFont = false;
+          try {
+            const fontResponse = await fetch(resolvePublicAssetPath('/fonts/NotoSansSC-Regular.ttf'));
+            if (fontResponse.ok) {
+              pyodide.FS.writeFile(fontPath, new Uint8Array(await fontResponse.arrayBuffer()));
+              hasCjkFont = true;
+            }
+          } catch {
+            // Latin-only replacements can still use PDF Base 14 fonts.
+          }
+
+          try {
+            const result = await pyodide.runPythonAsync(`
+import base64
+import json
+import os
+import re
+import pymupdf
+
+with open(${JSON.stringify(editsPath)}, "r", encoding="utf-8") as edit_stream:
+    text_edits = json.load(edit_stream)
+
+doc = pymupdf.open(${JSON.stringify(inputPath)})
+warnings = []
+resolved_edits = []
+
+def clamp(value, minimum=0.0, maximum=1.0):
+    return max(minimum, min(maximum, float(value)))
+
+def rect_distance(a, b):
+    acx = (a.x0 + a.x1) / 2
+    acy = (a.y0 + a.y1) / 2
+    bcx = (b.x0 + b.x1) / 2
+    bcy = (b.y0 + b.y1) / 2
+    center_distance = (acx - bcx) ** 2 + (acy - bcy) ** 2
+    size_distance = abs(a.width - b.width) + abs(a.height - b.height)
+    return center_distance + size_distance * 2
+
+for edit_index, edit in enumerate(text_edits):
+    page_index = int(edit.get("pageIndex", -1))
+    if page_index < 0 or page_index >= len(doc):
+        raise ValueError(f"Edit {edit_index + 1} points to an invalid page")
+
+    page = doc[page_index]
+    page_rect = page.rect
+    normalized = edit.get("rect") or {}
+    anchor = pymupdf.Rect(
+        clamp(normalized.get("x0", 0)) * page_rect.width,
+        clamp(normalized.get("y0", 0)) * page_rect.height,
+        clamp(normalized.get("x1", 0)) * page_rect.width,
+        clamp(normalized.get("y1", 0)) * page_rect.height,
+    )
+    if anchor.is_empty or anchor.is_infinite:
+        raise ValueError(f"Edit {edit_index + 1} has an invalid selection rectangle")
+
+    original_text = str(edit.get("originalText", ""))
+    candidates = page.search_for(original_text) if original_text else []
+    target = min(candidates, key=lambda candidate: rect_distance(candidate, anchor)) if candidates else anchor
+    if original_text and not candidates:
+        warnings.append(f"Page {page_index + 1}: used the visual selection because the exact text could not be searched")
+
+    resolved_edits.append((page_index, target, edit))
+    page.add_redact_annot(target, fill=False, cross_out=False)
+
+# Apply once per page so searching and locating later edits always uses the original page text.
+for page_index in sorted(set(item[0] for item in resolved_edits)):
+    doc[page_index].apply_redactions(images=0, graphics=0, text=0)
+
+for page_index, target, edit in resolved_edits:
+    replacement = str(edit.get("replacementText", ""))
+    if not replacement:
+        continue
+
+    page = doc[page_index]
+    font_size = max(4.0, float(edit.get("fontSizeRatio", 0.015)) * page.rect.height)
+    family = str(edit.get("fontFamily", "")).lower()
+    weight = str(edit.get("fontWeight", "")).lower()
+    style = str(edit.get("fontStyle", "")).lower()
+    is_bold = "bold" in weight or (weight.isdigit() and int(weight) >= 600)
+    is_italic = "italic" in style or "oblique" in style
+    contains_cjk = bool(re.search(r"[\u3400-\u9fff\uf900-\ufaff]", replacement))
+
+    if contains_cjk and ${hasCjkFont ? 'True' : 'False'}:
+        font_name = "notosanssc"
+        font_file = ${JSON.stringify(fontPath)}
+    else:
+        font_file = None
+        if "courier" in family or "monospace" in family:
+            font_name = "cobi" if is_bold and is_italic else "cobo" if is_bold else "coit" if is_italic else "cour"
+        elif "times" in family or "serif" in family:
+            font_name = "tibi" if is_bold and is_italic else "tibo" if is_bold else "tiit" if is_italic else "tiro"
+        else:
+            font_name = "hebi" if is_bold and is_italic else "hebo" if is_bold else "heit" if is_italic else "helv"
+
+    color_value = edit.get("color") or {}
+    text_color = (
+        clamp(color_value.get("r", 0)),
+        clamp(color_value.get("g", 0)),
+        clamp(color_value.get("b", 0)),
+    )
+    insert_rect = pymupdf.Rect(target.x0, target.y0, target.x1, max(target.y1, target.y0 + font_size * 1.45))
+    inserted = False
+    attempted_size = font_size
+
+    while attempted_size >= 4.0:
+        remaining = page.insert_textbox(
+            insert_rect,
+            replacement,
+            fontsize=attempted_size,
+            fontname=font_name,
+            fontfile=font_file,
+            color=text_color,
+            align=pymupdf.TEXT_ALIGN_LEFT,
+            overlay=True,
+        )
+        if remaining >= 0:
+            inserted = True
+            break
+        attempted_size -= 0.5
+
+    if not inserted:
+        warnings.append(f"Page {page_index + 1}: replacement text did not fit and was not inserted")
+
+pdf_bytes = doc.tobytes(garbage=4, deflate=True, clean=True)
+doc.close()
+
+json.dumps({
+    "pdf": base64.b64encode(pdf_bytes).decode("ascii"),
+    "warnings": warnings,
+})
+`);
+
+            const parsed = JSON.parse(result) as { pdf: string; warnings: string[] };
+            const binary = atob(parsed.pdf);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+
+            return {
+              pdf: new Blob([bytes], { type: 'application/pdf' }),
+              warnings: parsed.warnings || [],
+            };
+          } finally {
+            for (const path of cleanupPaths) {
+              try {
+                pyodide.FS.unlink(path);
+              } catch {
+                // Ignore missing temporary files.
+              }
+            }
+          }
+        },
+
         async pdfToDocx(file: File): Promise<Blob> {
           const arrayBuffer = await file.arrayBuffer();
           const pdfData = new Uint8Array(arrayBuffer);

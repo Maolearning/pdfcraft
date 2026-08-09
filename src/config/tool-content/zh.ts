@@ -190,7 +190,7 @@ export const toolContentZh: Record<string, ToolContent> = {
       { title: '内容编辑', description: '在共享前永久删除文档中的敏感信息。', icon: 'eye-off' },
     ],
     faq: [
-      { question: '可以编辑PDF中的原始文本吗？', answer: '此工具专注于添加注释和新内容。要编辑现有文本，您可能需要使用原始源文档。' },
+      { question: '可以编辑PDF中的原始文本吗？', answer: '可以。选中或点击同一页中的一行可选文字，读取后输入替换内容，再应用并下载；留空可永久删除该行。扫描件需要先进行OCR。' },
       { question: '我的编辑是永久的吗？', answer: '注释可以扁平化使其永久，或根据您的偏好保持为可编辑图层。' },
       { question: '可以撤销更改吗？', answer: '是的，编辑器支持撤销/重做功能。您也可以在保存前随时重置为原始文档。' },
     ],
