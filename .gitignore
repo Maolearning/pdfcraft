@@ -10,6 +10,7 @@ public/pdfjs-viewer/pdf.sandbox.js
 public/pdfjs-viewer/pdf_viewer.js
 public/pdfjs-viewer/viewer.js
 public/workers/pdf.worker.min.js
+public/pdfjs-annotation-viewer/web/viewer/
 
 # Build output
 .next

@@ -6,7 +6,7 @@
  *   node scripts/ensure-pdfjs-viewer-js.js [public|out]
  */
 
-import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -62,9 +62,28 @@ function copyDeploymentFiles() {
   }
 }
 
+function ensureAnnotationViewerRoute() {
+  const annotationWebDir = join(rootDir, target, 'pdfjs-annotation-viewer', 'web');
+  const sourcePath = join(annotationWebDir, 'viewer.html');
+  if (!existsSync(sourcePath)) return;
+
+  const routeDir = join(annotationWebDir, 'viewer');
+  const routePath = join(routeDir, 'index.html');
+  const sourceHtml = readFileSync(sourcePath, 'utf8');
+  const routeHtml = sourceHtml.replace(
+    '<head>',
+    '<head>\n  <base href="../">'
+  );
+
+  mkdirSync(routeDir, { recursive: true });
+  writeFileSync(routePath, routeHtml);
+  console.log(`[ensure-pdfjs-js] Created ${target}/pdfjs-annotation-viewer/web/viewer/index.html`);
+}
+
 convertMjsToJs(viewerDir);
 patchHtmlFiles(viewerDir);
 convertMjsToJs(workersDir);
+ensureAnnotationViewerRoute();
 copyDeploymentFiles();
 
 console.log('[ensure-pdfjs-js] Done.');

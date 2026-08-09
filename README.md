@@ -386,7 +386,7 @@ PDFCraft is configured for static export (`output: 'export'`), which means it ca
 
 ### Important Notes
 - **Headers Configuration**: Security and caching headers are pre-configured in all deployment files.
-- **PDF.js Viewer Route**: Keep `cleanUrls: false` in `vercel.json`; the embedded annotation viewer loads the tracked `/pdfjs-annotation-viewer/web/viewer.html` file directly.
+- **PDF.js Viewer Route**: The build helper generates `/pdfjs-annotation-viewer/web/viewer/index.html` with the correct asset base. The editor uses this trailing-slash route because Next.js/Vercel static export does not expose the tracked `viewer.html` path directly.
 - **Image Optimization**: Static export uses `images: { unoptimized: true }`.
 - **WASM Support**: All deployment configs include proper MIME types for WebAssembly.
 - **Subpath Support**: Set `BASE_PATH` environment variable during build to deploy under a subdirectory.

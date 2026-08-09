@@ -52,4 +52,4 @@ For a browser smoke test:
 
 Production is deployed from the `main` branch to Vercel. After pushing, verify `https://pdf.081400.xyz/zh/tools/edit-pdf/`, including the first-load PyMuPDF WASM path and the final download.
 
-The editor iframe depends on the literal `/pdfjs-annotation-viewer/web/viewer.html` static path. Vercel must keep `cleanUrls: false`; enabling clean URLs makes that iframe entry return 404 even though the extensionless route exists.
+The editor iframe uses `/pdfjs-annotation-viewer/web/viewer/`. `scripts/ensure-pdfjs-viewer-js.js` generates that route's `index.html` and injects a relative base URL so the viewer's scripts, styles, locale files, and extension assets still resolve from the original `web/` directory. Keep this generation step in both local and production builds; the tracked `viewer.html` path itself is not exposed reliably by Next.js/Vercel static export.

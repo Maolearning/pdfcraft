@@ -760,7 +760,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
         console.warn('Could not access iframe content to inject patches', e);
       }
     }, 1000);
-  }, []);
+  }, [t]);
 
   const handleClear = useCallback(() => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -793,7 +793,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
     } catch (selectionError) {
       setError(selectionError instanceof Error ? selectionError.message : '读取文字选区失败。');
     }
-  }, [t]);
+  }, []);
 
   const updateTextEdit = useCallback((id: string, replacementText: string) => {
     setTextEdits(current => current.map(edit =>
@@ -966,7 +966,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
           <div className="relative border border-[hsl(var(--color-border))] rounded-[var(--radius-md)] overflow-hidden bg-gray-100">
             <iframe
               ref={iframeRef}
-              src={`/pdfjs-annotation-viewer/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`}
+              src={`/pdfjs-annotation-viewer/web/viewer/?file=${encodeURIComponent(pdfUrl)}`}
               className="w-full h-[700px] border-0"
               title="PDF Editor"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
