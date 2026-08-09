@@ -51,3 +51,5 @@ For a browser smoke test:
 6. Confirm the downloaded filename ends in `_文字已编辑.pdf`.
 
 Production is deployed from the `main` branch to Vercel. After pushing, verify `https://pdf.081400.xyz/zh/tools/edit-pdf/`, including the first-load PyMuPDF WASM path and the final download.
+
+The editor iframe depends on the literal `/pdfjs-annotation-viewer/web/viewer.html` static path. Vercel must keep `cleanUrls: false`; enabling clean URLs makes that iframe entry return 404 even though the extensionless route exists.
