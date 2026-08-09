@@ -67,7 +67,7 @@ function ensureAnnotationViewerRoute() {
   const sourcePath = join(annotationWebDir, 'viewer.html');
   if (!existsSync(sourcePath)) return;
 
-  const routeDir = join(annotationWebDir, 'viewer');
+  const routeDir = join(annotationWebDir, 'pdfcraft-viewer');
   const routePath = join(routeDir, 'index.html');
   const sourceHtml = readFileSync(sourcePath, 'utf8');
   const routeHtml = sourceHtml.replace(
@@ -77,7 +77,7 @@ function ensureAnnotationViewerRoute() {
 
   mkdirSync(routeDir, { recursive: true });
   writeFileSync(routePath, routeHtml);
-  console.log(`[ensure-pdfjs-js] Created ${target}/pdfjs-annotation-viewer/web/viewer/index.html`);
+  console.log(`[ensure-pdfjs-js] Created ${target}/pdfjs-annotation-viewer/web/pdfcraft-viewer/index.html`);
 }
 
 convertMjsToJs(viewerDir);
