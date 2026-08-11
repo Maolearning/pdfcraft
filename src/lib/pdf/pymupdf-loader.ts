@@ -244,7 +244,18 @@ for page_index, target, edit in resolved_edits:
     if not inserted:
         warnings.append(f"Page {page_index + 1}: replacement text did not fit and was not inserted")
 
-pdf_bytes = doc.tobytes(garbage=4, deflate=True, clean=True)
+# A full rewrite is required so redacted text is physically removed instead of
+# lingering in an incremental revision. Keep content-stream cleaning disabled:
+# it can expand already-compressed PDFs. Object streams plus lossless stream,
+# image, and font compression keep the rewritten file compact.
+pdf_bytes = doc.tobytes(
+    garbage=3,
+    clean=False,
+    deflate=True,
+    deflate_images=True,
+    deflate_fonts=True,
+    use_objstms=1,
+)
 doc.close()
 
 json.dumps({

@@ -24,6 +24,8 @@ interface PdfTextEdit {
   color: { r: number; g: number; b: number };
 }
 
+type TextEditEngineStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 function parseCssColor(value: string): { r: number; g: number; b: number } {
   const match = value.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
   if (!match) return { r: 0, g: 0, b: 0 };
@@ -173,6 +175,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
   const [textEdits, setTextEdits] = useState<PdfTextEdit[]>([]);
   const [isApplyingTextEdits, setIsApplyingTextEdits] = useState(false);
   const [textEditStatus, setTextEditStatus] = useState<string | null>(null);
+  const [textEditEngineStatus, setTextEditEngineStatus] = useState<TextEditEngineStatus>('idle');
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const lastTextSelectionRef = useRef<PdfTextEdit | null>(null);
@@ -184,6 +187,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
       setError(null);
       setTextEdits([]);
       setTextEditStatus(null);
+      setTextEditEngineStatus('idle');
       lastTextSelectionRef.current = null;
       setPdfUrl(URL.createObjectURL(selectedFile));
     }
@@ -199,6 +203,38 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
     };
   }, [pdfUrl]);
 
+  useEffect(() => {
+    if (!file) return;
+
+    let cancelled = false;
+    const prepareEngine = async () => {
+      if (cancelled) return;
+      setTextEditEngineStatus('loading');
+      try {
+        const { loadPyMuPDF } = await import('@/lib/pdf/pymupdf-loader');
+        await loadPyMuPDF();
+        if (!cancelled) setTextEditEngineStatus('ready');
+      } catch {
+        if (!cancelled) setTextEditEngineStatus('error');
+      }
+    };
+
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    const idleHandle = browserWindow.requestIdleCallback?.(() => void prepareEngine(), { timeout: 1200 });
+    const timeoutHandle = idleHandle === undefined
+      ? window.setTimeout(() => void prepareEngine(), 400)
+      : undefined;
+
+    return () => {
+      cancelled = true;
+      if (idleHandle !== undefined) browserWindow.cancelIdleCallback?.(idleHandle);
+      if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
+    };
+  }, [file]);
+
   const handleIframeLoad = useCallback(() => {
     setTimeout(() => {
       setIsEditorReady(true);
@@ -207,6 +243,119 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
         const iframe = iframeRef.current;
         if (iframe?.contentDocument) {
           const doc = iframe.contentDocument;
+
+          const closeInlineTextEditor = (restorePreview = false) => {
+            const editor = doc.querySelector('.pdfcraft-inline-text-editor') as HTMLElement | null;
+            if (!editor) return;
+            if (restorePreview) {
+              const targetId = editor.dataset.targetEditId;
+              const target = targetId
+                ? doc.querySelector(`[data-pdfcraft-edit-id="${targetId}"]`) as HTMLElement | null
+                : null;
+              if (target && editor.dataset.previousPreview !== undefined) {
+                target.textContent = editor.dataset.previousPreview;
+              }
+            }
+            editor.remove();
+          };
+
+          const openInlineTextEditor = (span: HTMLElement) => {
+            const iframeWindow = iframe.contentWindow;
+            if (!iframeWindow) return;
+
+            let capturedEdit: PdfTextEdit;
+            try {
+              capturedEdit = createTextEditFromTextSpan(iframeWindow, span);
+            } catch {
+              return;
+            }
+
+            closeInlineTextEditor(true);
+            const editId = span.dataset.pdfcraftEditId || capturedEdit.id;
+            const originalText = span.dataset.pdfcraftOriginalText || capturedEdit.originalText;
+            const currentPreview = span.dataset.pdfcraftReplacementText ?? span.textContent?.trim() ?? originalText;
+            span.dataset.pdfcraftEditId = editId;
+            span.dataset.pdfcraftOriginalText = originalText;
+
+            const editor = doc.createElement('div');
+            editor.className = 'pdfcraft-inline-text-editor';
+            editor.dataset.targetEditId = editId;
+            editor.dataset.previousPreview = currentPreview;
+            editor.style.cssText = 'position:fixed;z-index:2147483647;width:min(360px,calc(100vw - 24px));padding:10px;border:1px solid rgba(59,130,246,.45);border-radius:10px;background:rgba(255,255,255,.98);box-shadow:0 14px 38px rgba(15,23,42,.22);font:13px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;';
+
+            const spanRect = span.getBoundingClientRect();
+            const editorWidth = Math.min(360, Math.max(240, iframeWindow.innerWidth - 24));
+            const left = Math.max(12, Math.min(spanRect.left, iframeWindow.innerWidth - editorWidth - 12));
+            const top = Math.max(12, Math.min(spanRect.bottom + 8, iframeWindow.innerHeight - 118));
+            editor.style.left = `${left}px`;
+            editor.style.top = `${top}px`;
+
+            const label = doc.createElement('div');
+            label.textContent = `第 ${capturedEdit.pageNumber} 页 · 修改后会暂存，可继续编辑其他文字`;
+            label.style.cssText = 'margin-bottom:7px;color:#64748b;font-size:12px;';
+
+            const input = doc.createElement('input');
+            input.type = 'text';
+            input.value = currentPreview;
+            input.setAttribute('aria-label', `第 ${capturedEdit.pageNumber} 页替换文字`);
+            input.style.cssText = 'box-sizing:border-box;width:100%;height:36px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#0f172a;font:14px/1.4 inherit;outline:none;';
+
+            const actions = doc.createElement('div');
+            actions.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;margin-top:8px;';
+            const makeButton = (text: string, primary = false) => {
+              const button = doc.createElement('button');
+              button.type = 'button';
+              button.textContent = text;
+              button.style.cssText = primary
+                ? 'height:30px;padding:0 10px;border:0;border-radius:7px;background:#2563eb;color:#fff;cursor:pointer;'
+                : 'height:30px;padding:0 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#334155;cursor:pointer;';
+              return button;
+            };
+
+            const cancelButton = makeButton('取消');
+            const deleteButton = makeButton('删除文字');
+            const confirmButton = makeButton('暂存修改', true);
+
+            const commit = (replacementText: string) => {
+              span.textContent = replacementText;
+              span.dataset.pdfcraftReplacementText = replacementText;
+              setTextEdits(current => {
+                const withoutCurrent = current.filter(edit => edit.id !== editId);
+                if (replacementText === originalText) return withoutCurrent;
+                const existingEdit = current.find(edit => edit.id === editId);
+                return [...withoutCurrent, {
+                  ...(existingEdit || capturedEdit),
+                  id: editId,
+                  originalText,
+                  replacementText,
+                }];
+              });
+              setError(null);
+              setTextEditStatus(
+                replacementText
+                  ? `已暂存第 ${capturedEdit.pageNumber} 页修改，可继续点击其他文字。`
+                  : `已暂存第 ${capturedEdit.pageNumber} 页删除操作，可继续点击其他文字。`
+              );
+              closeInlineTextEditor(false);
+            };
+
+            input.addEventListener('input', () => {
+              span.textContent = input.value;
+            });
+            input.addEventListener('keydown', event => {
+              if (event.key === 'Enter') commit(input.value);
+              if (event.key === 'Escape') closeInlineTextEditor(true);
+            });
+            cancelButton.addEventListener('click', () => closeInlineTextEditor(true));
+            deleteButton.addEventListener('click', () => commit(''));
+            confirmButton.addEventListener('click', () => commit(input.value));
+
+            actions.append(cancelButton, deleteButton, confirmButton);
+            editor.append(label, input, actions);
+            doc.body.appendChild(editor);
+            input.focus();
+            input.select();
+          };
 
           const rememberTextSelection = () => {
             const iframeWindow = iframe.contentWindow;
@@ -232,6 +381,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
             }
             try {
               lastTextSelectionRef.current = createTextEditFromTextSpan(iframeWindow, target);
+              openInlineTextEditor(target);
             } catch {
               // Ignore clicks outside a fully rendered text layer.
             }
@@ -770,6 +920,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
     setIsEditorReady(false);
     setTextEdits([]);
     setTextEditStatus(null);
+    setTextEditEngineStatus('idle');
     lastTextSelectionRef.current = null;
   }, [pdfUrl]);
 
@@ -818,7 +969,11 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
 
     setIsApplyingTextEdits(true);
     setError(null);
-    setTextEditStatus('正在永久删除原文字并生成新的 PDF，首次加载引擎可能需要一点时间...');
+    setTextEditStatus(
+      textEditEngineStatus === 'ready'
+        ? '正在本地写入全部文字修改并生成新的 PDF...'
+        : '正在启动本地 PDF 引擎并写入全部修改。首次使用需要加载较大的 WASM 资源，请稍候...'
+    );
 
     try {
       const { loadPyMuPDF } = await import('@/lib/pdf/pymupdf-loader');
@@ -839,6 +994,7 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
       setPdfUrl(URL.createObjectURL(editedFile));
       setTextEdits([]);
       setIsEditorReady(false);
+      setTextEditEngineStatus('ready');
       setTextEditStatus(
         result.warnings.length
           ? `已下载并重新载入。提示：${result.warnings.join('；')}`
@@ -850,7 +1006,11 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
     } finally {
       setIsApplyingTextEdits(false);
     }
-  }, [file, textEdits]);
+  }, [file, textEdits, textEditEngineStatus]);
+
+  const pendingTextEditCount = textEdits.filter(
+    edit => edit.replacementText !== edit.originalText
+  ).length;
 
   return (
     <div className={`space-y-6 ${className}`.trim()}>
@@ -898,9 +1058,14 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
             <div className="space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">修改 PDF 原文字</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">直接点击 PDF 文字进行修改</p>
                   <p className="mt-1 text-xs leading-5 text-[hsl(var(--color-muted-foreground))]">
-                    在下方 PDF 中选中一行可选文字，再点击“读取选中文字”。清空替换内容表示永久删除。请先完成原文修改，再添加普通标注。
+                    单击下方 PDF 中的一行可选文字，在文字旁直接修改或删除。每次操作只会暂存，可以连续改多处，最后统一保存下载。扫描件需要先 OCR。
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[hsl(var(--color-muted-foreground))]" role="status">
+                    {textEditEngineStatus === 'ready' && '本地编辑引擎已就绪，PDF 不会上传云端。'}
+                    {textEditEngineStatus === 'loading' && '正在后台准备本地编辑引擎，首次加载会稍慢；PDF 不会上传云端。'}
+                    {textEditEngineStatus === 'error' && '本地编辑引擎预加载未完成，将在保存时重试；PDF 不会上传云端。'}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
@@ -910,15 +1075,15 @@ export function EditPDFTool({ className = '' }: EditPDFToolProps) {
                     onClick={captureSelectedText}
                     disabled={!isEditorReady || isApplyingTextEdits}
                   >
-                    读取选中文字
+                    读取拖选文字
                   </Button>
                   <Button
                     size="sm"
                     onClick={applyAndDownloadTextEdits}
                     loading={isApplyingTextEdits}
-                    disabled={!textEdits.some(edit => edit.replacementText !== edit.originalText)}
+                    disabled={pendingTextEditCount === 0}
                   >
-                    应用并下载
+                    保存并下载{pendingTextEditCount > 0 ? `（${pendingTextEditCount} 处）` : ''}
                   </Button>
                 </div>
               </div>

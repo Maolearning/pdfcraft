@@ -161,9 +161,9 @@ describe('EditPDFTool', () => {
       fireEvent.click(screen.getByTestId('mock-upload-button'));
 
       await waitFor(() => {
-        expect(screen.getByText('修改 PDF 原文字')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: '读取选中文字' })).toBeDisabled();
-        expect(screen.getByRole('button', { name: '应用并下载' })).toBeDisabled();
+        expect(screen.getByText('直接点击 PDF 文字进行修改')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '读取拖选文字' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: '保存并下载' })).toBeDisabled();
       });
     });
 
