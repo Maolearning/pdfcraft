@@ -146,6 +146,7 @@ with open(${JSON.stringify(editsPath)}, "r", encoding="utf-8") as edit_stream:
 doc = pymupdf.open(${JSON.stringify(inputPath)})
 warnings = []
 resolved_edits = []
+page_span_cache = {}
 
 def clamp(value, minimum=0.0, maximum=1.0):
     return max(minimum, min(maximum, float(value)))
@@ -158,6 +159,242 @@ def rect_distance(a, b):
     center_distance = (acx - bcx) ** 2 + (acy - bcy) ** 2
     size_distance = abs(a.width - b.width) + abs(a.height - b.height)
     return center_distance + size_distance * 2
+
+def rect_area(rect):
+    return max(0.0, rect.width) * max(0.0, rect.height)
+
+def normalized_font_name(value):
+    name = re.sub(r"^[A-Z]{6}\\+", "", str(value or ""))
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+def page_span_items(page_index, page):
+    if page_index in page_span_cache:
+        return page_span_cache[page_index]
+
+    items = []
+    text_dict = page.get_text("dict")
+    for block in text_dict.get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        for line in block.get("lines", []):
+            line_spans = line.get("spans", [])
+            direction = tuple(line.get("dir", (1.0, 0.0)))
+            for span in line_spans:
+                if span.get("text") and len(span.get("bbox", [])) == 4:
+                    items.append({
+                        "span": span,
+                        "line_spans": line_spans,
+                        "direction": direction,
+                    })
+
+    page_span_cache[page_index] = items
+    return items
+
+def source_span_score(item, target, original_text):
+    span = item["span"]
+    span_rect = pymupdf.Rect(span["bbox"])
+    intersection = span_rect & target
+    overlap = rect_area(intersection) / max(1.0, min(rect_area(span_rect), rect_area(target)))
+    span_text = str(span.get("text", "")).strip()
+    wanted = original_text.strip()
+    if span_text == wanted:
+        text_penalty = 0
+    elif wanted and wanted in span_text:
+        text_penalty = 150
+    else:
+        text_penalty = 600
+    return rect_distance(span_rect, target) + text_penalty - overlap * 1000
+
+def find_source_span(page_index, page, target, original_text):
+    items = page_span_items(page_index, page)
+    if not items:
+        return None
+    return min(items, key=lambda item: source_span_score(item, target, original_text))
+
+def available_line_width(page, target, source_info, original_text, font_size):
+    # Partial selections must not expand across untouched text in the same span.
+    if not source_info:
+        return max(1.0, target.width)
+
+    source_span = source_info["span"]
+    source_text = str(source_span.get("text", "")).strip()
+    if source_text != original_text.strip():
+        return max(1.0, target.width)
+
+    source_rect = pymupdf.Rect(source_span["bbox"])
+    origin = source_span.get("origin", (source_rect.x0, source_rect.y1))
+    baseline_y = float(origin[1])
+    right_edge = page.rect.x1 - max(4.0, font_size * 0.25)
+    next_left = None
+
+    for other_span in source_info["line_spans"]:
+        if other_span is source_span or not other_span.get("text"):
+            continue
+        other_rect = pymupdf.Rect(other_span.get("bbox", (0, 0, 0, 0)))
+        other_origin = other_span.get("origin", (other_rect.x0, other_rect.y1))
+        same_baseline = abs(float(other_origin[1]) - baseline_y) <= max(2.0, font_size * 0.35)
+        if same_baseline and other_rect.x0 >= source_rect.x1 - 0.5:
+            if next_left is None or other_rect.x0 < next_left:
+                next_left = other_rect.x0
+
+    if next_left is not None:
+        right_edge = min(right_edge, next_left - max(1.0, font_size * 0.12))
+
+    return max(target.width, right_edge - target.x0)
+
+def span_traits(source_info, edit):
+    if source_info:
+        span = source_info["span"]
+        flags = int(span.get("flags", 0))
+        return {
+            "bold": bool(flags & 16),
+            "italic": bool(flags & 2),
+            "serif": bool(flags & 4),
+            "mono": bool(flags & 8),
+        }
+
+    family = str(edit.get("fontFamily", "")).lower()
+    weight = str(edit.get("fontWeight", "")).lower()
+    style = str(edit.get("fontStyle", "")).lower()
+    return {
+        "bold": "bold" in weight or (weight.isdigit() and int(weight) >= 600),
+        "italic": "italic" in style or "oblique" in style,
+        "serif": "serif" in family and "sans-serif" not in family,
+        "mono": "courier" in family or "monospace" in family,
+    }
+
+def compatible_base14_font(traits):
+    is_bold = traits["bold"]
+    is_italic = traits["italic"]
+    if traits["mono"]:
+        return "cobi" if is_bold and is_italic else "cobo" if is_bold else "coit" if is_italic else "cour"
+    if traits["serif"]:
+        return "tibi" if is_bold and is_italic else "tibo" if is_bold else "tiit" if is_italic else "tiro"
+    return "hebi" if is_bold and is_italic else "hebo" if is_bold else "heit" if is_italic else "helv"
+
+def font_has_text(font_object, text):
+    if not font_object:
+        return False
+    try:
+        return all(char.isspace() or font_object.has_glyph(ord(char)) for char in text)
+    except Exception:
+        return False
+
+def source_font_candidate(page, source_info, replacement):
+    if not source_info:
+        return None
+
+    source_name = normalized_font_name(source_info["span"].get("font", ""))
+    if not source_name:
+        return None
+
+    matches = []
+    for record in page.get_fonts(full=False):
+        if len(record) < 5:
+            continue
+        xref, _, _, base_name, resource_name = record[:5]
+        base_normalized = normalized_font_name(base_name)
+        if base_normalized == source_name:
+            score = 0
+        elif source_name in base_normalized or base_normalized in source_name:
+            score = 1
+        else:
+            continue
+        matches.append((score, int(xref), str(resource_name)))
+
+    for _, xref, resource_name in sorted(matches):
+        if xref <= 0 or not resource_name:
+            continue
+        try:
+            extracted = doc.extract_font(xref)
+            font_buffer = extracted[3] if len(extracted) > 3 else b""
+            font_object = pymupdf.Font(fontbuffer=font_buffer) if font_buffer else None
+            if font_has_text(font_object, replacement):
+                return {
+                    "name": "/" + resource_name.lstrip("/"),
+                    "file": None,
+                    "object": font_object,
+                    "reused": True,
+                }
+        except Exception:
+            continue
+
+    return None
+
+def fallback_font(traits, replacement, contains_cjk):
+    if contains_cjk and ${hasCjkFont ? 'True' : 'False'}:
+        try:
+            font_object = pymupdf.Font(fontfile=${JSON.stringify(fontPath)})
+        except Exception:
+            font_object = None
+        return {
+            "name": "notosanssc",
+            "file": ${JSON.stringify(fontPath)},
+            "object": font_object,
+            "reused": False,
+        }
+
+    font_name = compatible_base14_font(traits)
+    try:
+        font_object = pymupdf.Font(fontname=font_name)
+    except Exception:
+        font_object = None
+    return {
+        "name": font_name,
+        "file": None,
+        "object": font_object,
+        "reused": False,
+    }
+
+def calibrate_font_metrics(font_config, source_info, font_size):
+    font_config["metric_scale"] = 1.0
+    if not source_info:
+        return font_config
+
+    span = source_info["span"]
+    source_text = str(span.get("text", ""))
+    font_object = font_config.get("object")
+    if not source_text or not font_object:
+        return font_config
+
+    try:
+        measured_width = float(font_object.text_length(source_text, fontsize=font_size))
+        visual_width = pymupdf.Rect(span["bbox"]).width
+        if measured_width > 0 and visual_width > 0:
+            metric_scale = visual_width / measured_width
+            if 0.25 <= metric_scale <= 4.0:
+                font_config["metric_scale"] = metric_scale
+    except Exception:
+        pass
+    return font_config
+
+def measured_text_width(text, font_size, font_config):
+    metric_scale = float(font_config.get("metric_scale", 1.0))
+    font_object = font_config.get("object")
+    if font_object:
+        try:
+            return float(font_object.text_length(text, fontsize=font_size)) * metric_scale
+        except Exception:
+            pass
+    try:
+        return float(pymupdf.get_text_length(text, fontname=font_config["name"].lstrip("/"), fontsize=font_size)) * metric_scale
+    except Exception:
+        return max(font_size * 0.5, len(text) * font_size * 0.55)
+
+def fitted_single_line_size(text, original_size, available_width, font_config):
+    minimum_size = 4.0
+    width = measured_text_width(text, original_size, font_config)
+    if width <= available_width:
+        return original_size
+    if width <= 0:
+        return None
+
+    attempted_size = min(original_size, original_size * available_width / width * 0.985)
+    while attempted_size >= minimum_size:
+        if measured_text_width(text, attempted_size, font_config) <= available_width:
+            return attempted_size
+        attempted_size -= 0.25
+    return None
 
 for edit_index, edit in enumerate(text_edits):
     page_index = int(edit.get("pageIndex", -1))
@@ -182,67 +419,119 @@ for edit_index, edit in enumerate(text_edits):
     if original_text and not candidates:
         warnings.append(f"Page {page_index + 1}: used the visual selection because the exact text could not be searched")
 
-    resolved_edits.append((page_index, target, edit))
+    source_info = find_source_span(page_index, page, target, original_text)
+    replacement = str(edit.get("replacementText", "")).replace("\\r", " ").replace("\\n", " ")
+    insert_plan = None
+
+    # Prove that a non-empty replacement can be written before deleting the
+    # source. An overlong edit must leave the original text intact.
+    if replacement:
+        source_span = source_info["span"] if source_info else None
+        font_size = max(
+            4.0,
+            float(source_span.get("size", 0)) if source_span else float(edit.get("fontSizeRatio", 0.015)) * page.rect.height,
+        )
+        traits = span_traits(source_info, edit)
+        contains_cjk = bool(re.search(r"[\u3400-\u9fff\uf900-\ufaff]", replacement))
+        font_config = source_font_candidate(page, source_info, replacement)
+        if font_config is None:
+            font_config = fallback_font(traits, replacement, contains_cjk)
+        font_config = calibrate_font_metrics(font_config, source_info, font_size)
+
+        if source_span:
+            baseline_y = float(source_span.get("origin", (target.x0, target.y1))[1])
+            try:
+                text_color = pymupdf.sRGB_to_pdf(int(source_span.get("color", 0)))
+            except Exception:
+                text_color = (0, 0, 0)
+        else:
+            baseline_y = target.y1 - font_size * 0.2
+            color_value = edit.get("color") or {}
+            text_color = (
+                clamp(color_value.get("r", 0)),
+                clamp(color_value.get("g", 0)),
+                clamp(color_value.get("b", 0)),
+            )
+
+        available_width = available_line_width(page, target, source_info, original_text, font_size)
+        attempted_size = fitted_single_line_size(replacement, font_size, available_width, font_config)
+        if attempted_size is None:
+            warnings.append(f"第 {page_index + 1} 页：替换文字过长，未修改原文字。")
+            continue
+        insert_plan = {
+            "replacement": replacement,
+            "font_size": font_size,
+            "traits": traits,
+            "contains_cjk": contains_cjk,
+            "font_config": font_config,
+            "baseline_y": baseline_y,
+            "text_color": text_color,
+            "available_width": available_width,
+            "attempted_size": attempted_size,
+        }
+
+    resolved_edits.append((page_index, target, edit, source_info, insert_plan))
     page.add_redact_annot(target, fill=False, cross_out=False)
 
 # Apply once per page so searching and locating later edits always uses the original page text.
 for page_index in sorted(set(item[0] for item in resolved_edits)):
     doc[page_index].apply_redactions(images=0, graphics=0, text=0)
 
-for page_index, target, edit in resolved_edits:
-    replacement = str(edit.get("replacementText", ""))
-    if not replacement:
+for page_index, target, edit, source_info, insert_plan in resolved_edits:
+    if insert_plan is None:
         continue
 
     page = doc[page_index]
-    font_size = max(4.0, float(edit.get("fontSizeRatio", 0.015)) * page.rect.height)
-    family = str(edit.get("fontFamily", "")).lower()
-    weight = str(edit.get("fontWeight", "")).lower()
-    style = str(edit.get("fontStyle", "")).lower()
-    is_bold = "bold" in weight or (weight.isdigit() and int(weight) >= 600)
-    is_italic = "italic" in style or "oblique" in style
-    contains_cjk = bool(re.search(r"[\u3400-\u9fff\uf900-\ufaff]", replacement))
+    replacement = insert_plan["replacement"]
+    font_size = insert_plan["font_size"]
+    traits = insert_plan["traits"]
+    contains_cjk = insert_plan["contains_cjk"]
+    font_config = insert_plan["font_config"]
+    baseline_y = insert_plan["baseline_y"]
+    text_color = insert_plan["text_color"]
+    available_width = insert_plan["available_width"]
+    attempted_size = insert_plan["attempted_size"]
 
-    if contains_cjk and ${hasCjkFont ? 'True' : 'False'}:
-        font_name = "notosanssc"
-        font_file = ${JSON.stringify(fontPath)}
-    else:
-        font_file = None
-        if "courier" in family or "monospace" in family:
-            font_name = "cobi" if is_bold and is_italic else "cobo" if is_bold else "coit" if is_italic else "cour"
-        elif "times" in family or "serif" in family:
-            font_name = "tibi" if is_bold and is_italic else "tibo" if is_bold else "tiit" if is_italic else "tiro"
-        else:
-            font_name = "hebi" if is_bold and is_italic else "hebo" if is_bold else "heit" if is_italic else "helv"
-
-    color_value = edit.get("color") or {}
-    text_color = (
-        clamp(color_value.get("r", 0)),
-        clamp(color_value.get("g", 0)),
-        clamp(color_value.get("b", 0)),
-    )
-    insert_rect = pymupdf.Rect(target.x0, target.y0, target.x1, max(target.y1, target.y0 + font_size * 1.45))
     inserted = False
-    attempted_size = font_size
-
-    while attempted_size >= 4.0:
-        remaining = page.insert_textbox(
-            insert_rect,
+    try:
+        inserted_lines = page.insert_text(
+            pymupdf.Point(target.x0, baseline_y),
             replacement,
             fontsize=attempted_size,
-            fontname=font_name,
-            fontfile=font_file,
+            fontname=font_config["name"],
+            fontfile=font_config["file"],
             color=text_color,
-            align=pymupdf.TEXT_ALIGN_LEFT,
             overlay=True,
         )
-        if remaining >= 0:
-            inserted = True
-            break
-        attempted_size -= 0.5
+        inserted = inserted_lines == 1
+    except Exception:
+        inserted = False
+
+    # Some embedded subset fonts cannot be reused for newly requested glyphs.
+    # Retry with a metrically compatible Base-14 or CJK fallback without wrapping.
+    if not inserted and font_config.get("reused"):
+        font_config = fallback_font(traits, replacement, contains_cjk)
+        font_config = calibrate_font_metrics(font_config, source_info, font_size)
+        attempted_size = fitted_single_line_size(replacement, font_size, available_width, font_config)
+        if attempted_size is not None:
+            try:
+                inserted_lines = page.insert_text(
+                    pymupdf.Point(target.x0, baseline_y),
+                    replacement,
+                    fontsize=attempted_size,
+                    fontname=font_config["name"],
+                    fontfile=font_config["file"],
+                    color=text_color,
+                    overlay=True,
+                )
+                inserted = inserted_lines == 1
+            except Exception:
+                inserted = False
 
     if not inserted:
-        warnings.append(f"Page {page_index + 1}: replacement text did not fit and was not inserted")
+        warnings.append(f"第 {page_index + 1} 页：替换文字写入失败，原位置已保留为空白。")
+    elif attempted_size < font_size * 0.99:
+        warnings.append(f"第 {page_index + 1} 页：替换文字已缩小至 {attempted_size:.1f}pt 以保持单行。")
 
 # A full rewrite is required so redacted text is physically removed instead of
 # lingering in an incremental revision. Keep content-stream cleaning disabled:

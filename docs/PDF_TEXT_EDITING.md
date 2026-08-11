@@ -21,8 +21,10 @@ The edited PDF is downloaded and immediately reloaded into the editor so the res
 - Native `selectionchange` is preferred. A `pointerup` fallback captures the complete PDF.js text span because the bundled annotation viewer can suppress native selection in some browsers.
 - `pymupdf-loader.ts` sends the PDF and edit list to PyMuPDF WASM in Pyodide.
 - Exact text search is matched to the recorded visual anchor. If exact search fails, the visual rectangle is used and a warning is returned.
-- Redactions are applied once per page with images and vector graphics preserved. Replacement text is inserted afterward.
-- Base-14 fonts are used for Latin text. `public/fonts/NotoSansSC-Regular.ttf` is used for CJK replacement text when available.
+- Before redaction, the exporter resolves the matching native PDF text span and records its true baseline, point size, color, style flags, and embedded font resource.
+- Redactions are applied once per page with images and vector graphics preserved. Replacement text is then written from the original baseline as a single line, so PyMuPDF never reflows it into a second line.
+- The original embedded font is reused when it contains every replacement glyph. Otherwise a style-compatible Base-14 font is used for Latin text, or `public/fonts/NotoSansSC-Regular.ttf` for CJK text.
+- Whole-span replacements may use the free horizontal space up to the next text span or page edge. Partial-span replacements remain constrained to the selected area. Text is only reduced when the replacement cannot fit at the original point size.
 - Files stay in the browser; the feature does not require a backend upload.
 - The local Pyodide/PyMuPDF engine starts warming in browser idle time after a PDF is opened. Its first load downloads the site's relatively large WASM and wheel assets; the singleton is reused for later saves in the same page session.
 - Text deletion uses a full rewrite instead of an incremental save so removed text is not retained in an earlier PDF revision. The writer keeps content-stream cleaning disabled and enables object-stream, ordinary-stream, image, and font compression to limit lossless size growth. Highly optimized source PDFs can still change size after a secure rewrite.
@@ -30,7 +32,7 @@ The edited PDF is downloaded and immediately reloaded into the editor so the res
 ## Current limitations
 
 - One rendered line per queued edit. Multiline paragraph reflow is not attempted.
-- The replacement is shrink-to-fit inside the original line rectangle; it does not move neighboring content.
+- The editor does not move neighboring content. A long replacement may be reduced to preserve a single line and avoid colliding with the next text span.
 - Complex typography, kerning, ligatures, vertical writing, rotated text, and uncommon embedded fonts may not be reproduced exactly.
 - Scanned or image-only PDFs require OCR before this tool can identify text.
 - Apply original-text edits before adding ordinary annotations, because the edited PDF is regenerated and reloaded.
@@ -47,11 +49,13 @@ npm run build
 For a browser smoke test:
 
 1. Upload a PDF containing at least three selectable text lines.
-2. Replace the first line and verify it appears in the reloaded PDF.
+2. Replace a short bold sans-serif word with a longer value. Verify it remains on one line, keeps the original baseline, and does not fall back to a serif face.
 3. Verify the untouched lines still extract and render correctly.
 4. Repeat with an empty replacement to confirm permanent deletion.
-5. Test a CJK replacement and confirm the Noto Sans SC asset loads without a network or console error.
-6. Confirm the downloaded filename ends in `_文字已编辑.pdf`.
+5. Queue at least three edits and verify one final save applies all of them.
+6. Test a CJK replacement and confirm the Noto Sans SC asset loads without a network or console error.
+7. Confirm the downloaded filename ends in `_文字已编辑.pdf`.
+8. Compare the source and output file sizes. A secure full rewrite may differ, but should not show the previous avoidable content-stream expansion.
 
 Production is deployed from the `main` branch to Vercel. After pushing, verify `https://pdf.081400.xyz/zh/tools/edit-pdf/`, including the first-load PyMuPDF WASM path and the final download.
 
