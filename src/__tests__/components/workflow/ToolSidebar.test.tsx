@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ToolSidebar } from '@/components/workflow/ToolSidebar';
 
 vi.mock('@/config/tools', () => ({
@@ -26,6 +26,18 @@ vi.mock('next-intl', () => ({
 
 describe('ToolSidebar', () => {
   it('emits a fallback pointer drop event when native drag/drop is unavailable', () => {
+    const dispatchPointerEvent = (
+      target: EventTarget,
+      type: string,
+      init: PointerEventInit,
+    ) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.entries(init).forEach(([key, value]) => {
+        Object.defineProperty(event, key, { configurable: true, value });
+      });
+      target.dispatchEvent(event);
+    };
+
     const handleFallbackDrop = vi.fn();
     window.addEventListener('workflow-tool-drop', handleFallbackDrop);
 
@@ -37,9 +49,22 @@ describe('ToolSidebar', () => {
     );
 
     const mergeTool = screen.getByText('Merge PDF');
-    fireEvent.pointerDown(mergeTool, { pointerId: 1, clientX: 100, clientY: 120 });
-    fireEvent.pointerMove(window, { pointerId: 1, clientX: 340, clientY: 220 });
-    fireEvent.pointerUp(window, { pointerId: 1, clientX: 340, clientY: 220 });
+    dispatchPointerEvent(mergeTool, 'pointerdown', {
+      pointerId: 1,
+      button: 0,
+      clientX: 100,
+      clientY: 120,
+    });
+    dispatchPointerEvent(window, 'pointermove', {
+      pointerId: 1,
+      clientX: 340,
+      clientY: 220,
+    });
+    dispatchPointerEvent(window, 'pointerup', {
+      pointerId: 1,
+      clientX: 340,
+      clientY: 220,
+    });
 
     expect(handleFallbackDrop).toHaveBeenCalledTimes(1);
     expect(handleFallbackDrop.mock.calls[0][0]).toMatchObject({

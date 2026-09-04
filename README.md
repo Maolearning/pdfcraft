@@ -13,7 +13,7 @@
 
 <div align="center">
 
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fpdfcraft.devtoolcafe.com%2Fen%2F)](https://pdfcraft.devtoolcafe.com/en/)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fpdf.081400.xyz%2F)](https://pdf.081400.xyz/)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
@@ -231,6 +231,15 @@ navigation on `/`, every locale homepage, and every locale tool route.
 Deploy the main 081400 site before deploying PDFCraft whenever the shared Dock
 contract changes.
 
+### 081400 customized fork and upstream sync
+
+The deployed app is maintained in the customized `Maolearning/pdfcraft`
+repository and intentionally diverges from `PDFCraftTool/pdfcraft`. Upstream
+updates are reviewed and ported by feature so the shared Dock, simplified
+navigation, PDF text editing, and deployment-specific asset handling remain
+intact. See [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) for the current
+checkpoint and release checklist.
+
 ## 🚀 Getting Started
 
 To run this project locally, follow these steps:
@@ -244,7 +253,7 @@ To run this project locally, follow these steps:
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/PDFCraftTool/pdfcraft.git
+    git clone https://github.com/Maolearning/pdfcraft.git
     cd pdfcraft
     ```
 
@@ -302,7 +311,7 @@ If you want to build from source or need to modify the code:
 
 ```bash
 # Clone the repository
-git clone https://github.com/PDFCraftTool/pdfcraft.git
+git clone https://github.com/Maolearning/pdfcraft.git
 cd pdfcraft
 
 # Development mode (with hot reload)

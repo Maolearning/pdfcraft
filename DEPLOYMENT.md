@@ -662,7 +662,12 @@ The project includes:
 - **Vercel configuration** (`vercel.json`)
 - **Docker Compose** (`docker-compose.yml`) + Nginx (`nginx.conf`)
 
-Push to `main` branch to trigger automatic deployment.
+For the 081400 deployment, `Maolearning/pdfcraft:main` is the release branch
+for the Vercel-hosted PDF app at `https://pdf.081400.xyz/`. Pushes to `main`
+trigger the connected deployment. Upstream changes must be reviewed and
+ported feature-by-feature; do not replace the customized branch with a
+full upstream rebase. See [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) for
+the sync and verification workflow.
 
 ---
 
@@ -682,6 +687,8 @@ Push to `main` branch to trigger automatic deployment.
 Before deploying, verify:
 
 - [ ] `npm run build` completes without errors
+- [ ] `npm run lint` completes without errors
+- [ ] `npm test -- --run` passes
 - [ ] All pages render correctly at `/en`, `/zh`, etc.
 - [ ] The bare root route `/` renders exactly one `<site-dock>`
 - [ ] A localized route such as `/zh/` renders exactly one `<site-dock>`

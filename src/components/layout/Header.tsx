@@ -172,6 +172,14 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
         <div className="flex h-20 items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex flex-1 items-center gap-2">
+            <Link
+              href={`/${locale}`}
+              data-testid="brand-name"
+              aria-label={t('brand') || 'PDFCraft'}
+              className="text-lg font-semibold tracking-tight text-[hsl(var(--color-foreground))] transition-colors hover:text-[hsl(var(--color-primary))]"
+            >
+              {t('brand') || 'PDFCraft'}
+            </Link>
           </div>
 
           {/* Desktop Navigation */}

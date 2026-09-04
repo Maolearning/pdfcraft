@@ -189,10 +189,13 @@ export function ToolSidebar({
     });
 
     const handlePointerDown = (e: React.PointerEvent, tool: typeof tools[0]) => {
-        if (e.button !== 0) return;
+        // Synthetic pointer events (including test and accessibility tooling)
+        // may omit `button`; treat that as the primary pointer while still
+        // ignoring an explicitly supplied non-primary button.
+        if (typeof e.button === 'number' && e.button > 0) return;
 
         pointerDragRef.current = {
-            pointerId: e.pointerId,
+            pointerId: e.pointerId || 1,
             nodeData: createNodeData(tool),
             startX: e.clientX,
             startY: e.clientY,
@@ -244,7 +247,7 @@ export function ToolSidebar({
     useEffect(() => {
         const handlePointerMove = (event: PointerEvent) => {
             const dragState = pointerDragRef.current;
-            if (!dragState || dragState.pointerId !== event.pointerId) return;
+            if (!dragState || (event.pointerId > 0 && dragState.pointerId !== event.pointerId)) return;
 
             dragState.lastX = event.clientX;
             dragState.lastY = event.clientY;
@@ -258,7 +261,7 @@ export function ToolSidebar({
 
         const handlePointerUp = (event: PointerEvent) => {
             const dragState = pointerDragRef.current;
-            if (!dragState || dragState.pointerId !== event.pointerId) return;
+            if (!dragState || (event.pointerId > 0 && dragState.pointerId !== event.pointerId)) return;
 
             pointerDragRef.current = null;
             if (!dragState.hasMoved) return;
@@ -274,7 +277,7 @@ export function ToolSidebar({
 
         const handlePointerCancel = (event: PointerEvent) => {
             const dragState = pointerDragRef.current;
-            if (dragState && dragState.pointerId === event.pointerId) {
+            if (dragState && (!event.pointerId || dragState.pointerId === event.pointerId)) {
                 pointerDragRef.current = null;
             }
         };
