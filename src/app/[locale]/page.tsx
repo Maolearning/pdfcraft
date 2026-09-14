@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
-import { setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/lib/i18n/config';
+import { generateHomeMetadata } from '@/lib/seo';
 import ToolsPageClient from './tools/ToolsPageClient';
 
 export function generateStaticParams() {
@@ -9,6 +11,17 @@ export function generateStaticParams() {
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = locales.includes(locale as Locale) ? (locale as Locale) : 'en';
+  const t = await getTranslations({ locale: validLocale, namespace: 'metadata' });
+
+  return generateHomeMetadata(validLocale, {
+    title: t('home.title'),
+    description: t('home.description'),
+  });
 }
 
 function ToolsPageFallback() {

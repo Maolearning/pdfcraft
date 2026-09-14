@@ -37,6 +37,7 @@ export const Navigation: React.FC<NavigationProps> = ({ locale, currentPath }) =
 
   const mainNavItems = [
     { href: `/${locale}/tools`, label: tCommon('navigation.tools'), hasDropdown: true },
+    { href: `/${locale}/workflow`, label: tCommon('navigation.workflow'), hasDropdown: false },
   ];
 
   // Close dropdown when clicking outside

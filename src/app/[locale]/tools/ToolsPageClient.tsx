@@ -109,7 +109,7 @@ export default function ToolsPageClient({ locale, localizedToolContent }: ToolsP
     <div className="min-h-screen flex flex-col">
       <Header locale={locale} />
 
-      <main className="flex-1 max-w-[1360px] mx-auto w-full px-4 pt-28 pb-16 relative">
+      <main className="flex-1 max-w-[1360px] mx-auto w-full px-4 pt-28 pb-10 relative">
         {/* Animated Background Blobs (Subtle) */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[hsl(var(--color-primary)/0.05)] rounded-full mix-blend-multiply filter blur-3xl opacity-50" />

@@ -4,13 +4,15 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Search, Menu, X, Command, Github } from 'lucide-react';
+import { Search, Menu, X, Command, Home } from 'lucide-react';
 import { type Locale } from '@/lib/i18n/config';
 import { Button } from '@/components/ui/Button';
 import { RecentFilesDropdown } from '@/components/common/RecentFilesDropdown';
 import { searchTools, SearchResult } from '@/lib/utils/search';
 import { getToolContent } from '@/config/tool-content';
 import { getAllTools } from '@/config/tools';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UpdateCheckButton } from '@/components/common/UpdateCheckButton';
 
 export interface HeaderProps {
   locale: Locale;
@@ -296,6 +298,17 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
                 )}
               </div>
             )}
+
+            <UpdateCheckButton />
+            <a
+              href="https://081400.xyz/"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-[hsl(var(--color-muted-foreground))] transition-colors hover:bg-[hsl(var(--color-muted))/0.5] hover:text-[hsl(var(--color-foreground))]"
+              aria-label="返回首页"
+            >
+              <Home className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">返回首页</span>
+            </a>
+            <ThemeToggle />
 
             {/* Language Selector placeholder */}
             <div id="language-selector-slot" />
