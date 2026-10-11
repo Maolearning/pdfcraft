@@ -9,6 +9,7 @@ public/pdfjs-viewer/pdf.worker.js
 public/pdfjs-viewer/pdf.sandbox.js
 public/pdfjs-viewer/pdf_viewer.js
 public/pdfjs-viewer/viewer.js
+public/pdfjs-viewer/pdfcraft_signature_scanner.js
 public/workers/pdf.worker.min.js
 public/pdfjs-annotation-viewer/web/pdfcraft-viewer/
 
@@ -69,6 +70,7 @@ ehthumbs.db
 *.tmp
 *.temp
 .cache
+scratch/
 
 # Reference project (if not needed in repo)
 bentopdf-main

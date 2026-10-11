@@ -795,6 +795,7 @@ const getToolSettingsConfig = (): Record<string, ToolSettingsConfig> => ({
                     { value: 'deu', labelKey: 'Deutsch' },
                     { value: 'fra', labelKey: 'Français' },
                     { value: 'spa', labelKey: 'Español' },
+                    { value: 'hun', labelKey: 'Magyar' },
                 ],
             },
         ],
@@ -2560,12 +2561,14 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
 
     const handleFieldChange = (key: string, value: unknown) => {
         setSettings(prev => {
-            const next = { ...prev, [key]: value };
-            if (node) {
-                onUpdateSettings(node.id, next);
-            }
-            return next;
+            return { ...prev, [key]: value };
         });
+        if (node) {
+            const nextSettings = { ...settings, [key]: value };
+            setTimeout(() => {
+                onUpdateSettings(node.id, nextSettings);
+            }, 0);
+        }
     };
 
     const handleApply = () => {
@@ -2591,7 +2594,9 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
         }
         setSettings(defaultSettings);
         if (node) {
-            onUpdateSettings(node.id, defaultSettings);
+            setTimeout(() => {
+                onUpdateSettings(node.id, defaultSettings);
+            }, 0);
         }
     };
 
