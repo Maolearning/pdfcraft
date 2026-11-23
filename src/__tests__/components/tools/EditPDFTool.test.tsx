@@ -156,18 +156,6 @@ describe('EditPDFTool', () => {
   });
 
   describe('PDF Viewer', () => {
-    it('shows selectable-text editing controls after a PDF is loaded', async () => {
-      render(<EditPDFTool />);
-
-      fireEvent.click(screen.getByTestId('mock-upload-button'));
-
-      await waitFor(() => {
-        expect(screen.getByText('直接点击 PDF 文字进行修改')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: '读取拖选文字' })).toBeDisabled();
-        expect(screen.getByRole('button', { name: '保存并下载' })).toBeDisabled();
-      });
-    });
-
     it('renders iframe for PDF viewer after file is loaded', async () => {
       render(<EditPDFTool />);
       

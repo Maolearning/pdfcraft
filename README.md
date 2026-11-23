@@ -21,6 +21,14 @@
 
 </div>
 
+> [!TIP]
+> ### 🚀 Discover LibrePDF — Private Desktop PDF Suite
+> Looking for a cross-platform desktop application with zero network telemetry? Check out our sister project:  
+> **[PDFCraftTool/LibrePDF](https://github.com/PDFCraftTool/LibrePDF)**: Open-source, zero-telemetry desktop PDF suite with 53+ tools, direct in-place text editing, offline Ollama AI Copilot, and node-based DAG workflows. A private, subscription-free Acrobat & Stirling-PDF desktop alternative.
+> 
+> * 🔗 **Project Repository**: [https://github.com/PDFCraftTool/LibrePDF](https://github.com/PDFCraftTool/LibrePDF)
+> * ⚖️ **Open-Source License**: [Apache-2.0 License](https://github.com/PDFCraftTool/LibrePDF/blob/main/LICENSE)
+
 ## 📖 About
 
 **PDFCraft** is a comprehensive suite of PDF tools designed for privacy and performance. Unlike many online converters, PDFCraft processes your files entirely within your browser using WebAssembly technology. Your documents **never** leave your device, ensuring maximum security for your sensitive data.
@@ -34,6 +42,19 @@ This project is built with modern web technologies to provide a slick, app-like 
 - **🛠️ Comprehensive Toolset**: Over 80+ tools to handle any PDF task.
 - **🎨 Modern UI**: Clean, accessible, and responsive design built with Tailwind CSS.
 - **🌐 Multi-language**: Supports English, Spanish, French, German, Portuguese, Japanese, Korean, and Chinese.
+
+### Rotating PDFs
+
+Standard right-angle rotations preserve the original document's editable form fields, bookmarks, internal page links, custom page labels, attachments, and title/author metadata. This applies to all-page and selected-page rotations, including pages that already have a rotation. Arbitrary-angle rotation continues to rebuild page content through embedding and does not provide the same preservation guarantees.
+### Editing bookmark destinations
+
+Editing titles or reorganizing existing local page bookmarks preserves their original position, zoom and fit mode, including named destinations. Changing a bookmark's target page explicitly resets its view to the top of the new page. New bookmarks retain the existing page-top default.
+### Editing metadata
+
+Metadata edits preserve fields that were not selected for an update. Disabling automatic modification-date updates retains the existing date; explicitly supplied dates and producer information still take precedence.
+### PDF ZIP archives
+
+The PDFs to ZIP tool keeps every selected document, including files with the same name from different folders. Duplicate names receive a numeric suffix before the extension (for example, `report.pdf` and `report (2).pdf`). Existing input names are reserved, so an original `report (2).pdf` is not overwritten by an automatically renamed file. PDF contents are not modified.
 
 ## 🔄 Workflow Editor (Beta)
 
@@ -433,3 +454,9 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 <div align="center">
   Built with ❤️ by the PDFCraft Team
 </div>
+
+### Organize several bookmarks
+
+In the bookmark editor, use Shift+click for a visible range and Ctrl/Cmd+click (or checkboxes) to toggle individual bookmarks. Drag any selected row to move the selection in document order: the top/bottom of a target row inserts before/after it, while its middle nests the selection. Moving a parent carries its children once. Use **Move selected to top level** or the drop area below the tree to return a selection to the top level. Saving retains the hierarchy, page destinations, view positions and styles.
+In **Edit PDF**, hold **Shift** while dragging an image/object resize handle to preserve its original aspect ratio. Release Shift for free resizing. The opposite corner stays fixed.
+In the PDF reader, open **Tools → Right-to-left page order** to place the first page of a spread on the right. This works in vertical, page-by-page and wrapped scrolling without mirroring page contents or changing the interface language. The toggle is unavailable in horizontal scrolling, which retains its existing page order. The choice is remembered on this device when browser storage is available.

@@ -7,8 +7,8 @@ the PDF editing work can evolve independently.
 ## Current checkpoint
 
 - Upstream repository: `PDFCraftTool/pdfcraft`
-- Reviewed upstream head: `cd7e48a`
-- Release tag: `v2026.09.04-cd7e48a`
+- Reviewed upstream head: `c3a591e`
+- Release tag: `v2026.11.16-c3a591e`
 - Deployment repository: `Maolearning/pdfcraft`
 - Deployment branch: `main`
 

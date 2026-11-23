@@ -27,7 +27,7 @@ export default [
   reactHooksPlugin.configs['recommended-latest'],
   nextPlugin.flatConfig.coreWebVitals,
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{js,jsx,ts,tsx,mjs}'],
     languageOptions: {
       globals: {
         ...globals.browser,

@@ -363,7 +363,6 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = false }) =>
                   </Link>
                 </li>
               ))}
-
             </ul>
           </nav>
         )}
